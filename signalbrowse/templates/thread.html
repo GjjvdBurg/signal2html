@@ -1,0 +1,17 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <title>SignalBrowse &middot; Thread &middot; {{ thread_name }}</title>
+  </head>
+  <body>
+    <ul>
+      {% for msg in messages %}
+        <li>
+          <div class="msg-{{ msg.type }}">
+            {{ msg.body }}
+          </div>
+        </li>
+      {% endfor %}
+    </ul>
+  </body>
+</html>
