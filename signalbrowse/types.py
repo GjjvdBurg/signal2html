@@ -42,31 +42,34 @@ def is_outgoing_message_type(_type):
 def is_inbox_type(_type):
     return _type & BASE_TYPE_MASK == BASE_INBOX_TYPE
 
+
 def is_incoming_call(_type):
     return _type == INCOMING_CALL_TYPE
+
 
 def is_outgoing_call(_type):
     return _type == OUTGOING_CALL_TYPE
 
+
 def is_missed_call(_type):
     return _type == MISSED_CALL_TYPE
+
 
 def is_joined_type(_type):
     return _type & BASE_TYPE_MASK == JOINED_TYPE
 
+
 def get_named_message_type(_type):
     if is_outgoing_message_type(_type):
-        return 'outgoing'
+        return "outgoing"
     elif is_inbox_type(_type):
-        return 'incoming'
+        return "incoming"
     elif is_incoming_call(_type):
-        return 'call-incoming'
+        return "call-incoming"
     elif is_outgoing_call(_type):
-        return 'call-outgoing'
+        return "call-outgoing"
     elif is_missed_call(_type):
-        return 'call-missed'
+        return "call-missed"
     elif is_joined_type(_type):
-        return 'joined'
-    return 'unknown'
-
-
+        return "joined"
+    return "unknown"
