@@ -69,9 +69,6 @@ def get_sms_records(db, thread):
         (thread._id,),
     )
     for _id, address, date, date_sent, body, _type in sms_qry:
-        if not thread.recipient.recipientId._id == address:
-            raise ValueError("Unexpected address: %s" % address)
-
         sms = SMSMessageRecord(
             _id=_id,
             recipient=thread.recipient,
@@ -130,9 +127,6 @@ def get_mms_records(db, thread, recipients, backup_dir):
         quote_body,
         m_type,
     ) in qry:
-        if not thread.recipient.recipientId._id == address:
-            raise ValueError("Unexpected address: %s" % address)
-
         quote = None
         if quote_id:
             quote_auth_id = [
