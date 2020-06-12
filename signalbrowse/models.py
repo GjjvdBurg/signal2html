@@ -46,6 +46,7 @@ class Recipient:
 
 @dataclass
 class DisplayRecord(metaclass=ABCMeta):
+    addressRecipient: Recipient # Recipient corresponding to address field
     recipient: Recipient
     dateSent: int
     dateReceived: int

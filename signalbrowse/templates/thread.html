@@ -48,6 +48,13 @@
         align-self: center;
       }
 
+      .msg-name {
+        font-weight: bold;
+        font-size: smaller;
+        margin-bottom: 5px;
+        display: block;
+      }
+
       .msg p {
         margin-top: 0;
         margin-bottom: 5px;
@@ -123,8 +130,11 @@
       </div>
       {% else %}
       <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+         {% if msg.isGroup and msg.type == 'incoming' %}
+         <span class="msg-name">{{ msg.name }}</span>
+         {% endif %}
          {% if msg.attachments %}
-          {% for attach in msg.attachments %}
+         {% for attach in msg.attachments %}
             <div class="attachment">
               {% if attach.voiceNote %}
                 <audio controls>
@@ -143,7 +153,7 @@
               </div>
               {% endif %}
             </div>
-          {% endfor %}
+         {% endfor %}
          {% endif %}
          {% if msg.isCall %}
          <div class="msg-icon"></div>

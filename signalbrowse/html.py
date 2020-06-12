@@ -32,11 +32,10 @@ def dump_thread(thread, output_dir):
 
     thread_name = thread.recipient.name[0].strip()
     is_group = False
-    if thread.recipient.recipientId._id.startswith('__textsecure_group__'):
+    if thread.recipient.recipientId._id.startswith("__textsecure_group__"):
         is_group = True
 
     prev_date = None
-
     simple_messages = []
     for msg in messages:
         if is_joined_type(msg._type):
@@ -52,24 +51,26 @@ def dump_thread(thread, output_dir):
             }
             simple_messages.append(out)
 
-        isCall = False
+        is_call = False
         if is_incoming_call(msg._type):
-            isCall = True
+            is_call = True
             msg.body = f"{thread_name} called you"
         elif is_outgoing_call(msg._type):
-            isCall = True
+            is_call = True
             msg.body = "You called"
         elif is_missed_call(msg._type):
-            isCall = True
+            is_call = True
             msg.body = "Missed call"
 
         out = {
-            "isCall": isCall,
+            "isGroup": is_group,
+            "isCall": is_call,
             "type": get_named_message_type(msg._type),
             "body": "" if msg.body is None else msg.body,
             "date": date_sent,
             "attachments": [],
             "id": msg._id,
+            "name": msg.addressRecipient.name[0],
         }
 
         if isinstance(msg, MMSMessageRecord):

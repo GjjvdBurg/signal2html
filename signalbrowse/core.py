@@ -68,9 +68,11 @@ def get_sms_records(db, thread):
         "FROM sms WHERE thread_id=?",
         (thread._id,),
     )
-    for _id, address, date, date_sent, body, _type in sms_qry:
+    qry_res = sms_qry.fetchall()
+    for _id, address, date, date_sent, body, _type in qry_res:
         sms = SMSMessageRecord(
             _id=_id,
+            addressRecipient=make_recipient(db, address),
             recipient=thread.recipient,
             dateSent=date_sent,
             dateReceived=date,
@@ -116,6 +118,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
         "quote_author, quote_body, msg_box FROM mms WHERE thread_id=?",
         (thread._id,),
     )
+    qry_res = qry.fetchall()
     for (
         _id,
         address,
@@ -126,7 +129,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
         quote_author,
         quote_body,
         msg_box,
-    ) in qry:
+    ) in qry_res:
         quote = None
         if quote_id:
             quote_auth_id = [
@@ -140,6 +143,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
 
         mms = MMSMessageRecord(
             _id=_id,
+            addressRecipient=make_recipient(db, address),
             recipient=thread.recipient,
             dateSent=date,
             dateReceived=date_received,
