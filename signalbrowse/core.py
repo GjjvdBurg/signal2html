@@ -113,7 +113,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
     mms_records = []
     qry = db.execute(
         "SELECT _id, address, date, date_received, body, quote_id, "
-        "quote_author, quote_body, m_type FROM mms WHERE thread_id=?",
+        "quote_author, quote_body, msg_box FROM mms WHERE thread_id=?",
         (thread._id,),
     )
     for (
@@ -125,7 +125,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
         quote_id,
         quote_author,
         quote_body,
-        m_type,
+        msg_box,
     ) in qry:
         quote = None
         if quote_id:
@@ -147,7 +147,7 @@ def get_mms_records(db, thread, recipients, backup_dir):
             body=body,
             quote=quote,
             attachments=[],
-            _type=m_type,
+            _type=msg_box,
         )
         mms_records.append(mms)
 
