@@ -1,17 +1,160 @@
 <!DOCTYPE html>
+<meta charset="utf-8">
 <html lang="en">
   <head>
-    <title>SignalBrowse &middot; Thread &middot; {{ thread_name }}</title>
+    <title>SignalBrowse &middot; {{ thread_name }}</title>
+    <style>
+      body {
+        background-color: #222;
+      }
+
+      .message-box {
+        display: flex;
+        flex-direction: column;
+        width: 50%;
+        margin: 0 auto;
+        padding-left: 30px;
+        padding-right: 30px;
+        background-color: #282828;
+      }
+
+      .msg-incoming {
+        align-self: flex-start;
+        background: teal;
+      }
+
+      .msg-outgoing {
+        align-self: flex-end;
+        background: #555;
+      }
+
+      .msg {
+        color: white;
+        font-family: Noto Sans, LiberationSans, OpenSans, sans-serif;
+        max-width: 50%;
+        border-radius: .4em;
+        margin: 15px 0;
+        padding: 10px;
+      }
+
+      .msg-date {
+        font-size: x-small;
+        opacity: 50%;
+      }
+
+      .msg-date-change {
+        font-size: x-small;
+        opacity: 50%;
+        align-self: center;
+      }
+
+      .msg p {
+        margin-top: 0;
+        margin-bottom: 5px;
+      }
+
+      .msg img, .msg video {
+        max-width: 100%;
+        max-height: 400px;
+      }
+
+      .msg-img-container input[type=checkbox] {
+        display: none;
+      }
+
+      .msg-img-container img {
+        transition: transform 0.25s ease;
+        cursor: zoom-in;
+      }
+
+      .msg-img-container input[type=checkbox]:checked ~ label > img {
+        transform: scale(2.5);
+        cursor: zoom-out;
+        z-index: 1;
+        position: relative;
+      }
+
+      .msg-call-incoming, .msg-call-outgoing, .msg-call-missed {
+        align-self: center;
+      }
+      .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date {
+        display: block;
+        text-align: center;
+      }
+
+      .msg-icon {
+        background-repeat: no-repeat;
+        background-size: cover;
+        width: 25px;
+        height: 25px;
+        opacity: 50%;
+        margin: 0 auto;
+        filter: invert(100%);
+        -webkit-filter: invert(100%);
+      }
+
+      .msg-call-missed .msg-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-missed"><line x1="23" y1="1" x2="17" y2="7"></line><line x1="17" y1="1" x2="23" y2="7"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+      }
+
+      .msg-call-incoming .msg-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-incoming"><polyline points="16 2 16 8 22 8"></polyline><line x1="23" y1="1" x2="16" y2="8"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+      }
+
+      .msg-call-outgoing .msg-icon {
+        background-image: url('data:image/svg+xml;utf-8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="feather feather-phone-outgoing"><polyline points="23 7 23 1 17 1"></polyline><line x1="16" y1="8" x2="23" y2="1"></line><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path></svg>');
+        -moz-transform: scaleX(-1);
+        -o-transform: scaleX(-1);
+        -webkit-transform: scaleX(-1);
+        transform: scaleX(-1);
+        filter: FlipH;
+        -ms-filter: "FlipH";
+      }
+    </style>
   </head>
   <body>
-    <ul>
+    <div class="message-box">
       {% for msg in messages %}
-        <li>
-          <div class="msg-{{ msg.type }}">
-            {{ msg.body }}
-          </div>
-        </li>
+      {% if "date_msg" in msg %}
+      <div id="msg-{{ msg.id }}" class="msg msg-date-change">
+         <p>
+         {{ msg.body }}
+         </p>
+      </div>
+      {% else %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+         {% if msg.attachments %}
+          {% for attach in msg.attachments %}
+            <div class="attachment">
+              {% if attach.voiceNote %}
+                <audio controls>
+                  <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+                </audio>
+              {% elif attach.contentType == "video/mp4" %}
+                <video controls>
+                  <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+                </video>
+              {% elif attach.contentType == "image/jpeg" %}
+              <div class="msg-img-container">
+                <input type="checkbox" id="zoomCheck-{{ msg.id }}">
+                <label for="zoomCheck-{{ msg.id }}">
+                  <img src="{{ attach.fileName }}">
+                </label>
+              </div>
+              {% endif %}
+            </div>
+          {% endfor %}
+         {% endif %}
+         {% if msg.isCall %}
+         <div class="msg-icon"></div>
+         {% endif %}
+         <p>
+         {{ msg.body }}
+         </p>
+         <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
+       </div>
+      {% endif %}
       {% endfor %}
-    </ul>
+    </div>
   </body>
 </html>
