@@ -8,9 +8,9 @@ import os
 from setuptools import find_packages, setup
 
 # Package meta-data.
-NAME = "signalbrowse"
-DESCRIPTION = "Convert your Signal backup into pretty HTML"
-URL = "https://github.com/GjjvdBurg/signalbrowse"
+NAME = "signal2html"
+DESCRIPTION = "Convert your Signal backup to pretty HTML"
+URL = "https://github.com/GjjvdBurg/signal2html"
 EMAIL = "gertjanvandenburg@gmail.com"
 AUTHOR = "Gertjan van den Burg"
 REQUIRES_PYTHON = ">=3.6.0"
@@ -66,7 +66,7 @@ setup(
         exclude=["tests", "*.tests", "*.tests.*", "tests.*"]
     ),
     entry_points={
-        "console_scripts": ["signalbrowse=signalbrowse.__main__:main"],
+        "console_scripts": ["signal2html=signal2html.__main__:main"],
     },
     install_requires=REQUIRED,
     extras_require=EXTRAS,

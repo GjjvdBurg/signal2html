@@ -3,9 +3,9 @@
 # Uses self-documenting macros from here:
 # http://marmelab.com/blog/2016/02/29/auto-documented-makefile.html
 
-PACKAGE=signalbrowse
-DOC_DIR='./docs/'
-VENV_DIR=/tmp/sb_venv/
+PACKAGE=signal2html
+DOC_DIR='./docs'
+VENV_DIR=/tmp/sb_venv
 
 .PHONY: help dist venv
 

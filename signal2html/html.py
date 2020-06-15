@@ -24,7 +24,7 @@ def dump_thread(thread, output_dir):
     messages.sort(key=lambda mr: mr.dateSent)
 
     env = Environment(
-        loader=PackageLoader("signalbrowse", "templates"),
+        loader=PackageLoader("signal2html", "templates"),
         autoescape=select_autoescape(["html", "xml"]),
     )
 
