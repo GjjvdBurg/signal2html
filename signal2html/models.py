@@ -20,6 +20,9 @@ from typing import List
 class RecipientId:
     _id: str  # phone number (?)
 
+    def __hash__(self):
+        return hash(self._id)
+
 
 @dataclass
 class Quote:
@@ -42,11 +45,15 @@ class Attachment:
 class Recipient:
     recipientId: RecipientId
     name: str
+    color: str
+
+    def __hash__(self):
+        return hash(self.recipientId)
 
 
 @dataclass
 class DisplayRecord(metaclass=ABCMeta):
-    addressRecipient: Recipient # Recipient corresponding to address field
+    addressRecipient: Recipient  # Recipient corresponding to address field
     recipient: Recipient
     dateSent: int
     dateReceived: int

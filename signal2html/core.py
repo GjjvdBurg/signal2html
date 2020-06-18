@@ -42,6 +42,15 @@ def check_backup(backup_dir):
         raise DatabaseVersionMismatch
 
 
+def get_color(db, recipient_id):
+    query = db.execute(
+        "SELECT color FROM recipient_preferences WHERE recipient_ids=?",
+        (recipient_id,),
+    )
+    color = query.fetchone()[0]
+    return color
+
+
 def make_recipient(db, recipient_id):
     if recipient_id.startswith("__textsecure_group__"):
         qry = db.execute(
@@ -56,9 +65,10 @@ def make_recipient(db, recipient_id):
         label = qry.fetchone()
 
     label = (recipient_id,) if label[0] is None else label
+    color = get_color(db, recipient_id)
 
     rid = RecipientId(recipient_id)
-    return Recipient(rid, name=label)
+    return Recipient(rid, name=label, color=color)
 
 
 def get_sms_records(db, thread):

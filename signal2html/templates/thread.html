@@ -23,6 +23,8 @@
         background: teal;
       }
 
+      {{ group_color_css }}
+
       .msg-outgoing {
         align-self: flex-end;
         background: #555;
@@ -82,6 +84,7 @@
       }
 
       .msg-call-incoming, .msg-call-outgoing, .msg-call-missed {
+        background: none;
         align-self: center;
       }
       .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date {
@@ -129,7 +132,7 @@
          </p>
       </div>
       {% else %}
-      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }} msg-sender-{{ msg.sender_idx }}">
          {% if msg.isGroup and msg.type == 'incoming' %}
          <span class="msg-name">{{ msg.name }}</span>
          {% endif %}
