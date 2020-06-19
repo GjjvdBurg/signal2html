@@ -7,6 +7,7 @@
 import os
 import datetime as dt
 
+from emoji import emoji_lis as emoji_list
 from jinja2 import Environment, PackageLoader, select_autoescape
 
 from .models import MMSMessageRecord
@@ -19,6 +20,11 @@ from .types import (
     is_outgoing_call,
 )
 from .html_colors import COLORMAP
+
+
+def is_all_emoji(body):
+    body = body.replace(" ", "").replace("\ufe0f", "")
+    return len(emoji_list(body)) == len(body)
 
 
 def dump_thread(thread, output_dir):
@@ -64,7 +70,7 @@ def dump_thread(thread, output_dir):
             (m for m in messages if is_inbox_type(m._type)), None
         )
         clr = firstInbox.addressRecipient.color if firstInbox else "teal"
-        clr = 'teal' if clr is None else clr
+        clr = "teal" if clr is None else clr
         group_color_css += msg_css % (0, COLORMAP[clr])
 
     # Create a simplified dict for each message
@@ -95,12 +101,27 @@ def dump_thread(thread, output_dir):
             is_call = True
             msg.body = "Missed call"
 
+        body = "" if msg.body is None else msg.body
+        all_emoji = is_all_emoji(body)
+        emoji_pos = emoji_list(body)
+        new_body = ""
+        emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
+        for i, c in enumerate(body):
+            if i in emoji_lookup:
+                new_body += (
+                    "<span class='msg-emoji'>%s</span>" % emoji_lookup[i]
+                )
+            else:
+                new_body += c
+        body = new_body
+
         aR = msg.addressRecipient
         out = {
+            "isAllEmoji": all_emoji,
             "isGroup": is_group,
             "isCall": is_call,
             "type": get_named_message_type(msg._type),
-            "body": "" if msg.body is None else msg.body,
+            "body": body,
             "date": date_sent,
             "attachments": [],
             "id": msg._id,
@@ -126,7 +147,3 @@ def dump_thread(thread, output_dir):
     )
     with open(filename, "w") as fp:
         fp.write(html)
-
-
-def dump_index():
-    pass

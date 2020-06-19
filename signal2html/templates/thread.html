@@ -4,6 +4,7 @@
   <head>
     <title>SignalBrowse &middot; {{ thread_name }}</title>
     <style>
+
       body {
         background-color: #222;
       }
@@ -32,7 +33,7 @@
 
       .msg {
         color: white;
-        font-family: Noto Sans, LiberationSans, OpenSans, sans-serif;
+        font-family: Noto Sans, Liberation Sans, OpenSans, sans-serif;
         max-width: 50%;
         border-radius: .4em;
         margin: 15px 0;
@@ -42,6 +43,15 @@
       .msg-date {
         font-size: x-small;
         opacity: 50%;
+        display: block;
+      }
+
+      .msg-emoji {
+        font-family: Noto Color Emoji, sans-serif;
+      }
+
+      .msg-all-emoji {
+        font-size: xx-large;
       }
 
       .msg-date-change {
@@ -161,8 +171,12 @@
          {% if msg.isCall %}
          <div class="msg-icon"></div>
          {% endif %}
+         {% if msg.isAllEmoji %}
+         <p class="msg-all-emoji">
+         {% else %}
          <p>
-         {{ msg.body }}
+         {% endif %}
+         {{ msg.body | safe }}
          </p>
          <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
        </div>
