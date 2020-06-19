@@ -39,6 +39,7 @@ class Attachment:
     width: int
     height: int
     quote: bool
+    unique_id: str
 
 
 @dataclass

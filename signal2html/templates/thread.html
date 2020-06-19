@@ -1,3 +1,23 @@
+{% macro attachment(attach) -%}
+  <div class="attachment">
+    {% if attach.voiceNote %}
+      <audio controls>
+        <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+      </audio>
+    {% elif attach.contentType == "video/mp4" %}
+      <video controls>
+        <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+      </video>
+    {% elif attach.contentType == "image/jpeg" %}
+    <div class="msg-img-container">
+      <input type="checkbox" id="zoomCheck-{{ attach.unique_id }}">
+      <label for="zoomCheck-{{ attach.unique_id }}">
+        <img src="{{ attach.fileName }}">
+      </label>
+    </div>
+    {% endif %}
+  </div>
+{%- endmacro %}
 <!DOCTYPE html>
 <meta charset="utf-8">
 <html lang="en">
@@ -70,11 +90,20 @@
       .msg p {
         margin-top: 0;
         margin-bottom: 5px;
+        display: block;
       }
 
       .msg img, .msg video {
         max-width: 100%;
         max-height: 400px;
+      }
+
+      img {
+        image-orientation: from-image;
+      }
+
+      audio {
+        width: 400px;
       }
 
       .msg-img-container input[type=checkbox] {
@@ -91,6 +120,33 @@
         cursor: zoom-out;
         z-index: 1;
         position: relative;
+      }
+
+      .msg-quote {
+        display: flex;
+        width: 98%;
+        background-color: #0008;
+        padding: 5px 5px 5px 0px;
+        border-radius: .3em;
+        margin-bottom: 5px;
+        justify-content: space-between;
+        border-left: 5px solid white;
+      }
+
+      .msg-quote-message {
+        padding-left: 5px;
+      }
+
+      .msg-quote-attach {
+        flex-grow: 1;
+        max-width: 30%;
+      }
+
+      .msg-quote-attach .msg-img-container input[type=checkbox]:checked ~ label > img {
+        transform: scale(5);
+      }
+      .msg-quote-attach img {
+        max-height: 5em;
       }
 
       .msg-call-incoming, .msg-call-outgoing, .msg-call-missed {
@@ -144,40 +200,40 @@
       {% else %}
       <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }} msg-sender-{{ msg.sender_idx }}">
          {% if msg.isGroup and msg.type == 'incoming' %}
-         <span class="msg-name">{{ msg.name }}</span>
+          <span class="msg-name">{{ msg.name }}</span>
+         {% endif %}
+         {% if msg.quote %}
+          <div class="msg-quote">
+            <div class="msg-quote-message">
+              <span class="msg-name">{{ msg.quote.name }}</span>
+              <p>{{ msg.quote.body | safe }}</p>
+            </div>
+            {% if msg.quote.attachments %}
+              <div class="msg-quote-attach">
+              {% for attach in msg.quote.attachments %}
+                {{ attachment(attach) }}
+              {% endfor %}
+              </div>
+            {% endif %}
+          </div>
          {% endif %}
          {% if msg.attachments %}
-         {% for attach in msg.attachments %}
-            <div class="attachment">
-              {% if attach.voiceNote %}
-                <audio controls>
-                  <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
-                </audio>
-              {% elif attach.contentType == "video/mp4" %}
-                <video controls>
-                  <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
-                </video>
-              {% elif attach.contentType == "image/jpeg" %}
-              <div class="msg-img-container">
-                <input type="checkbox" id="zoomCheck-{{ msg.id }}">
-                <label for="zoomCheck-{{ msg.id }}">
-                  <img src="{{ attach.fileName }}" loading="lazy">
-                </label>
-              </div>
-              {% endif %}
-            </div>
-         {% endfor %}
+          {% for attach in msg.attachments %}
+            {{ attachment(attach) }}
+          {% endfor %}
          {% endif %}
          {% if msg.isCall %}
-         <div class="msg-icon"></div>
+          <div class="msg-icon"></div>
          {% endif %}
-         {% if msg.isAllEmoji %}
-         <p class="msg-all-emoji">
-         {% else %}
-         <p>
+         {% if msg.body %}
+          {% if msg.isAllEmoji %}
+            <p class="msg-all-emoji">
+          {% else %}
+            <p>
+          {% endif %}
+          {{ msg.body | safe }}
+          </p>
          {% endif %}
-         {{ msg.body | safe }}
-         </p>
          <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
        </div>
       {% endif %}

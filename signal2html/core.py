@@ -112,6 +112,7 @@ def add_mms_attachments(db, mms, backup_dir):
     for _id, ct, unique_id, voice_note, width, height, quote in qry:
         a = Attachment(
             contentType=ct,
+            unique_id=unique_id,
             fileName=get_attachment_filename(_id, unique_id, backup_dir),
             voiceNote=voice_note,
             width=width,
@@ -142,14 +143,12 @@ def get_mms_records(db, thread, recipients, backup_dir):
     ) in qry_res:
         quote = None
         if quote_id:
-            quote_auth_id = [
-                r.recipientId
-                for r in recipients
-                if r.recipientId._id == quote_author
-            ]
-            if not quote_auth_id:
+            quote_auth = next((
+                r for r in recipients if r.recipientId._id == quote_author
+                ), None)
+            if not quote_auth:
                 raise ValueError("Unknown quote author: %s" % quote_author)
-            quote = Quote(_id=quote_id, author=quote_auth_id, text=quote_body)
+            quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
         mms = MMSMessageRecord(
             _id=_id,

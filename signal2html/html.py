@@ -24,7 +24,19 @@ from .html_colors import COLORMAP
 
 def is_all_emoji(body):
     body = body.replace(" ", "").replace("\ufe0f", "")
-    return len(emoji_list(body)) == len(body)
+    return len(emoji_list(body)) == len(body) and len(body) > 0
+
+
+def format_emoji(body, is_quote=False):
+    emoji_pos = emoji_list(body)
+    new_body = ""
+    emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
+    for i, c in enumerate(body):
+        if i in emoji_lookup:
+            new_body += "<span class='msg-emoji'>%s</span>" % emoji_lookup[i]
+        else:
+            new_body += c
+    return new_body
 
 
 def dump_thread(thread, output_dir):
@@ -101,19 +113,27 @@ def dump_thread(thread, output_dir):
             is_call = True
             msg.body = "Missed call"
 
-        body = "" if msg.body is None else msg.body
-        all_emoji = is_all_emoji(body)
-        emoji_pos = emoji_list(body)
-        new_body = ""
-        emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
-        for i, c in enumerate(body):
-            if i in emoji_lookup:
-                new_body += (
-                    "<span class='msg-emoji'>%s</span>" % emoji_lookup[i]
-                )
+        quote = {}
+        if isinstance(msg, MMSMessageRecord) and msg.quote:
+            quote_author_id = msg.quote.author.recipientId._id
+            quote_author_name = msg.quote.author.name[0]
+            if quote_author_id == quote_author_name:
+                name = "You"
             else:
-                new_body += c
-        body = new_body
+                name = quote_author_name
+
+            quote = {
+                "name": name,
+                "body": format_emoji(msg.quote.text),
+                "attachments": [],
+            }
+
+        body = "" if msg.body is None else msg.body
+        if isinstance(msg, MMSMessageRecord):
+            all_emoji = not msg.quote and is_all_emoji(body)
+        else:
+            all_emoji = is_all_emoji(body)
+        body = format_emoji(body)
 
         aR = msg.addressRecipient
         out = {
@@ -127,10 +147,16 @@ def dump_thread(thread, output_dir):
             "id": msg._id,
             "name": aR.name[0],
             "sender_idx": sender_idx[aR] if is_group else "0",
+            "quote": quote,
         }
 
         if isinstance(msg, MMSMessageRecord):
-            out["attachments"] = msg.attachments
+            for a in msg.attachments:
+                if a.quote:
+                    out["quote"]["attachments"].append(a)
+                else:
+                    out["attachments"].append(a)
+
         simple_messages.append(out)
 
     if not simple_messages:
