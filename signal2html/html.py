@@ -2,6 +2,8 @@
 
 """Code for writing out the HTML
 
+Author: Gertjan van den Burg
+
 """
 
 import os
@@ -23,11 +25,13 @@ from .html_colors import COLORMAP
 
 
 def is_all_emoji(body):
+    """ Check if a message is non-empty and only contains emoji """
     body = body.replace(" ", "").replace("\ufe0f", "")
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
 def format_emoji(body, is_quote=False):
+    """ Wrap emoji in <span> so we can style it easily """
     emoji_pos = emoji_list(body)
     new_body = ""
     emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
@@ -40,6 +44,8 @@ def format_emoji(body, is_quote=False):
 
 
 def dump_thread(thread, output_dir):
+    """Write a Thread instance to a HTML page in the output directory """
+
     # Combine and sort the messages
     messages = thread.mms + thread.sms
     messages.sort(key=lambda mr: mr.dateSent)
@@ -92,6 +98,7 @@ def dump_thread(thread, output_dir):
         if is_joined_type(msg._type):
             continue
 
+        # Add a "date change" message when to mark the date
         date_sent = dt.datetime.fromtimestamp(msg.dateSent // 1000)
         date_sent = date_sent.replace(microsecond=(msg.dateSent % 1000) * 1000)
         if prev_date is None or date_sent.date() != prev_date:
@@ -102,6 +109,7 @@ def dump_thread(thread, output_dir):
             }
             simple_messages.append(out)
 
+        # Handle calls
         is_call = False
         if is_incoming_call(msg._type):
             is_call = True
@@ -113,6 +121,7 @@ def dump_thread(thread, output_dir):
             is_call = True
             msg.body = "Missed call"
 
+        # Deal with quoted messages
         quote = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
             quote_author_id = msg.quote.author.recipientId._id
@@ -121,13 +130,13 @@ def dump_thread(thread, output_dir):
                 name = "You"
             else:
                 name = quote_author_name
-
             quote = {
                 "name": name,
                 "body": format_emoji(msg.quote.text),
                 "attachments": [],
             }
 
+        # Clean up message body
         body = "" if msg.body is None else msg.body
         if isinstance(msg, MMSMessageRecord):
             all_emoji = not msg.quote and is_all_emoji(body)
@@ -135,6 +144,7 @@ def dump_thread(thread, output_dir):
             all_emoji = is_all_emoji(body)
         body = format_emoji(body)
 
+        # Create message dictionary
         aR = msg.addressRecipient
         out = {
             "isAllEmoji": all_emoji,
@@ -150,6 +160,7 @@ def dump_thread(thread, output_dir):
             "quote": quote,
         }
 
+        # Add attachments
         if isinstance(msg, MMSMessageRecord):
             for a in msg.attachments:
                 if a.quote:

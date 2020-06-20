@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""User interface
+"""User interface for command line script
 
 """
 

@@ -5,7 +5,7 @@
 Models for storing Signal backup objects.
 
 These are heavily inspired by the database models of the Signal Android app, 
-but only the fields necessary for the web display are kept.
+but only the necessary fields are kept.
 
 Author: Gertjan van den Burg
 

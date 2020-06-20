@@ -11,7 +11,3 @@ class DatabaseNotFound(Exception):
 
 class DatabaseVersionNotFound(Exception):
     pass
-
-
-class DatabaseVersionMismatch(Exception):
-    pass

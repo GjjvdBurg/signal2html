@@ -2,6 +2,8 @@
 
 """Utilities for dealing with message types
 
+These are extracted from the Signal Android app source code.
+
 """
 
 BASE_TYPE_MASK = 0x1F
