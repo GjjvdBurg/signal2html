@@ -96,7 +96,7 @@ def get_sms_records(db, thread):
 
 def get_attachment_filename(_id, unique_id, backup_dir):
     fname = f"Attachment_{_id}_{unique_id}.bin"
-    pth = os.path.join(backup_dir, fname)
+    pth = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(pth):
         print(f"Warning: couldn't find attachment {pth}!", file=sys.stderr)
         return None
