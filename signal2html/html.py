@@ -182,5 +182,5 @@ def dump_thread(thread, output_dir):
     filename = os.path.join(
         output_dir, thread_name.replace(" ", "_") + ".html"
     )
-    with open(filename, "w") as fp:
+    with open(filename, "w", encoding="utf-8") as fp:
         fp.write(html)
