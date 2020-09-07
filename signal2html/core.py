@@ -155,8 +155,12 @@ def get_mms_records(db, thread, recipients, backup_dir):
                 (r for r in recipients if r.recipientId._id == quote_author),
                 None,
             )
-            if not quote_auth:
-                raise ValueError("Unknown quote author: %s" % quote_author)
+            if quote_auth is None:
+                # Quote is from someone who isn't a recipient (e.g. a friend 
+                # quotes a third person in a group). We'll just create a 
+                # recipient object for this person.
+                rid = RecipientId(quote_author)
+                quote_auth = Recipient(rid, quote_author, color=None)
             quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
         mms = MMSMessageRecord(
