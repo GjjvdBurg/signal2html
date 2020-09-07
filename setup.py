@@ -14,7 +14,7 @@ URL = "https://github.com/GjjvdBurg/signal2html"
 EMAIL = "gertjanvandenburg@gmail.com"
 AUTHOR = "Gertjan van den Burg"
 REQUIRES_PYTHON = ">=3.6.0"
-VERSION = "0.1.0"
+VERSION = None
 
 # What packages are required for this module to be executed?
 REQUIRED = ["emoji", "jinja2"]
