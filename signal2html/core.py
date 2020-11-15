@@ -9,6 +9,7 @@ Author: Gertjan van den Burg
 import os
 import warnings
 import sqlite3
+import shutil
 
 from .exceptions import (
     DatabaseNotFound,
@@ -99,19 +100,25 @@ def get_sms_records(db, thread):
     return sms_records
 
 
-def get_attachment_filename(_id, unique_id, backup_dir):
+def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     """ Get the absolute path of an attachment, warn if it doesn't exist"""
     fname = f"Attachment_{_id}_{unique_id}.bin"
-    pth = os.path.abspath(os.path.join(backup_dir, fname))
-    if not os.path.exists(pth):
+    source = os.path.abspath(os.path.join(backup_dir, fname))
+    if not os.path.exists(source):
         warnings.warn(
-            f"Warning: couldn't find attachment {pth}. Maybe it was deleted?"
+            f"Warning: couldn't find attachment {source}. Maybe it was deleted?"
         )
         return None
-    return pth
+
+    # Copying here is a bit of a side-effect
+    target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
+    os.makedirs(target_dir, exist_ok=True)
+    target = os.path.join(target_dir, fname)
+    shutil.copy(source, target)
+    return target
 
 
-def add_mms_attachments(db, mms, backup_dir):
+def add_mms_attachments(db, mms, backup_dir, thread_dir):
     """ Add all attachment objects to MMS message """
     qry = db.execute(
         "SELECT _id, ct, unique_id, voice_note, width, height, quote "
@@ -122,7 +129,9 @@ def add_mms_attachments(db, mms, backup_dir):
         a = Attachment(
             contentType=ct,
             unique_id=unique_id,
-            fileName=get_attachment_filename(_id, unique_id, backup_dir),
+            fileName=get_attachment_filename(
+                _id, unique_id, backup_dir, thread_dir
+            ),
             voiceNote=voice_note,
             width=width,
             height=height,
@@ -131,7 +140,7 @@ def add_mms_attachments(db, mms, backup_dir):
         mms.attachments.append(a)
 
 
-def get_mms_records(db, thread, recipients, backup_dir):
+def get_mms_records(db, thread, recipients, backup_dir, thread_dir):
     """ Collect all MMS records for a given thread """
     mms_records = []
     qry = db.execute(
@@ -158,8 +167,8 @@ def get_mms_records(db, thread, recipients, backup_dir):
                 None,
             )
             if quote_auth is None:
-                # Quote is from someone who isn't a recipient (e.g. a friend 
-                # quotes a third person in a group). We'll just create a 
+                # Quote is from someone who isn't a recipient (e.g. a friend
+                # quotes a third person in a group). We'll just create a
                 # recipient object for this person.
                 rid = RecipientId(quote_author)
                 quote_auth = Recipient(rid, quote_author, color=None)
@@ -180,15 +189,17 @@ def get_mms_records(db, thread, recipients, backup_dir):
         mms_records.append(mms)
 
     for mms in mms_records:
-        add_mms_attachments(db, mms, backup_dir)
+        add_mms_attachments(db, mms, backup_dir, thread_dir)
 
     return mms_records
 
 
-def populate_thread(db, thread, recipients, backup_dir):
+def populate_thread(db, thread, recipients, backup_dir, thread_dir):
     """ Populate a thread with all corresponding messages """
     sms_records = get_sms_records(db, thread)
-    mms_records = get_mms_records(db, thread, recipients, backup_dir)
+    mms_records = get_mms_records(
+        db, thread, recipients, backup_dir, thread_dir
+    )
     thread.sms = sms_records
     thread.mms = mms_records
 
@@ -215,7 +226,8 @@ def process_backup(backup_dir, output_dir):
     # Combine the recipient objects and the thread info into Thread objects
     for (_id, _), recipient in zip(threads, recipients):
         t = Thread(_id=_id, recipient=recipient)
-        populate_thread(db, t, recipients, backup_dir)
-        dump_thread(t, output_dir)
+        thread_dir = os.path.join(output_dir, t.name.replace(" ", "_"))
+        populate_thread(db, t, recipients, backup_dir, thread_dir)
+        dump_thread(t, thread_dir)
 
     db.close()

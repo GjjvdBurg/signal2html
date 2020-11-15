@@ -46,8 +46,6 @@ def format_emoji(body, is_quote=False):
 def dump_thread(thread, output_dir):
     """Write a Thread instance to a HTML page in the output directory """
 
-    os.makedirs(output_dir, exist_ok=True)
-
     # Combine and sort the messages
     messages = thread.mms + thread.sms
     messages.sort(key=lambda mr: mr.dateSent)
@@ -181,6 +179,8 @@ def dump_thread(thread, output_dir):
         messages=simple_messages,
         group_color_css=group_color_css,
     )
+
+    os.makedirs(output_dir, exist_ok=True)
 
     filename = os.path.join(
         output_dir, thread_name.replace(" ", "_") + ".html"
