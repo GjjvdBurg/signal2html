@@ -46,6 +46,8 @@ def format_emoji(body, is_quote=False):
 def dump_thread(thread, output_dir):
     """Write a Thread instance to a HTML page in the output directory """
 
+    os.makedirs(output_dir, exist_ok=True)
+
     # Combine and sort the messages
     messages = thread.mms + thread.sms
     messages.sort(key=lambda mr: mr.dateSent)
@@ -78,7 +80,8 @@ def dump_thread(thread, output_dir):
             ar_color = ar.color
             if ar_color in colors_used:
                 color = next(
-                    (c for c in COLORMAP if not c in group_colors), None,
+                    (c for c in COLORMAP if not c in group_colors),
+                    None,
                 )
                 ar_color = ar.color if color is None else color
             group_color_css += msg_css % (idx, COLORMAP[ar_color])
