@@ -24,6 +24,7 @@ from .models import (
     Thread,
 )
 from .html import dump_thread
+from .html_colors import get_random_color
 
 
 def check_backup(backup_dir):
@@ -38,10 +39,11 @@ def check_backup(backup_dir):
     # We have only ever seen database version 23, so we don't proceed if it's
     # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
-    if not version == "23":
+    if not version in ["23", "65", "80"]:
         warnings.warn(
             f"Warning: Found untested Signal database version: {version}."
         )
+    return version
 
 
 def get_color(db, recipient_id):
@@ -54,28 +56,67 @@ def get_color(db, recipient_id):
     return color
 
 
-def make_recipient(db, recipient_id):
-    """ Create a Recipient instance from a given recipient id """
+def make_recipient_v23(db, recipient_id):
+    """ Create a Recipient instance from a given recipient id (db version 23)"""
     if recipient_id.startswith("__textsecure_group__"):
         qry = db.execute(
             "SELECT title FROM groups WHERE group_id=?", (recipient_id,)
         )
         label = qry.fetchone()
+        isgroup = True
     else:
         qry = db.execute(
             "SELECT system_display_name FROM recipient_preferences WHERE recipient_ids=?",
             (recipient_id,),
         )
         label = qry.fetchone()
+        isgroup = False
 
-    label = (recipient_id,) if label[0] is None else label
+    name = recipient_id if label[0] is None else label[0]
     color = get_color(db, recipient_id)
 
     rid = RecipientId(recipient_id)
-    return Recipient(rid, name=label, color=color)
+    return Recipient(rid, name=name, color=color, isgroup=isgroup)
 
 
-def get_sms_records(db, thread):
+def make_recipient_v80(db, recipient_id):
+    """Create a Recipient instance from a recipient id (db version 65, 80)"""
+    qry = db.execute(
+        "SELECT group_id, system_display_name, profile_joined_name, color from recipient where _id=?",
+        (recipient_id,),
+    )
+    groupid, name, joined_name, color = qry.fetchone()
+    if color is None:
+        color = get_random_color()
+    isgroup = groupid is not None
+    if isgroup:
+        qry = db.execute(
+            "SELECT title FROM groups WHERE group_id=?", (groupid,)
+        )
+        name = qry.fetchone()[0]
+
+    if name is None:
+        if joined_name is None:
+            name = str(recipient_id)
+        name = joined_name
+
+    rid = RecipientId(recipient_id)
+    return Recipient(rid, name=name, color=color, isgroup=isgroup)
+
+
+def make_recipient(db, recipient_id, version=None):
+    if version == "23":
+        return make_recipient_v23(db, recipient_id)
+    elif version in ["65", "80"]:
+        return make_recipient_v80(db, recipient_id)
+    else:
+        warnings.warn(
+            f"Untested database version {version}, defaulting to latest known working version."
+        )
+        return make_recipient_v80(db, recipient_id)
+
+
+def get_sms_records(db, thread, version=None):
     """ Collect all the SMS records for a given thread """
     sms_records = []
     sms_qry = db.execute(
@@ -87,7 +128,7 @@ def get_sms_records(db, thread):
     for _id, address, date, date_sent, body, _type in qry_res:
         sms = SMSMessageRecord(
             _id=_id,
-            addressRecipient=make_recipient(db, address),
+            addressRecipient=make_recipient(db, address, version=version),
             recipient=thread.recipient,
             dateSent=date_sent,
             dateReceived=date,
@@ -129,7 +170,7 @@ def add_mms_attachments(db, mms, backup_dir):
         mms.attachments.append(a)
 
 
-def get_mms_records(db, thread, recipients, backup_dir):
+def get_mms_records(db, thread, recipients, backup_dir, version=None):
     """ Collect all MMS records for a given thread """
     mms_records = []
     qry = db.execute(
@@ -152,20 +193,26 @@ def get_mms_records(db, thread, recipients, backup_dir):
         quote = None
         if quote_id:
             quote_auth = next(
-                (r for r in recipients if r.recipientId._id == quote_author),
+                (
+                    r
+                    for r in recipients
+                    if str(r.recipientId._id) == str(quote_author)
+                ),
                 None,
             )
             if quote_auth is None:
-                # Quote is from someone who isn't a recipient (e.g. a friend 
-                # quotes a third person in a group). We'll just create a 
+                # Quote is from someone who isn't a recipient (e.g. a friend
+                # quotes a third person in a group). We'll just create a
                 # recipient object for this person.
                 rid = RecipientId(quote_author)
-                quote_auth = Recipient(rid, quote_author, color=None)
+                quote_auth = Recipient(
+                    rid, quote_author, color=None, isgroup=False
+                )
             quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
         mms = MMSMessageRecord(
             _id=_id,
-            addressRecipient=make_recipient(db, address),
+            addressRecipient=make_recipient(db, address, version=version),
             recipient=thread.recipient,
             dateSent=date,
             dateReceived=date_received,
@@ -183,10 +230,12 @@ def get_mms_records(db, thread, recipients, backup_dir):
     return mms_records
 
 
-def populate_thread(db, thread, recipients, backup_dir):
+def populate_thread(db, thread, recipients, backup_dir, version=None):
     """ Populate a thread with all corresponding messages """
-    sms_records = get_sms_records(db, thread)
-    mms_records = get_mms_records(db, thread, recipients, backup_dir)
+    sms_records = get_sms_records(db, thread, version=version)
+    mms_records = get_mms_records(
+        db, thread, recipients, backup_dir, version=version
+    )
     thread.sms = sms_records
     thread.mms = mms_records
 
@@ -195,7 +244,7 @@ def process_backup(backup_dir, output_dir):
     """ Main functionality to convert database into HTML """
 
     # Verify backup and open database
-    check_backup(backup_dir)
+    db_version = check_backup(backup_dir)
     db_file = os.path.join(backup_dir, "database.sqlite")
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
@@ -207,13 +256,13 @@ def process_backup(backup_dir, output_dir):
     # Now turn the recipients from the threads into Recipient classes
     recipients = []
     for _, recipient_id in threads:
-        r = make_recipient(db, recipient_id)
+        r = make_recipient(db, recipient_id, version=db_version)
         recipients.append(r)
 
     # Combine the recipient objects and the thread info into Thread objects
     for (_id, _), recipient in zip(threads, recipients):
         t = Thread(_id=_id, recipient=recipient)
-        populate_thread(db, t, recipients, backup_dir)
+        populate_thread(db, t, recipients, backup_dir, version=db_version)
         dump_thread(t, output_dir)
 
     db.close()

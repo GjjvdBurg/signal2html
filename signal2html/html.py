@@ -58,10 +58,8 @@ def dump_thread(thread, output_dir):
     template = env.get_template("thread.html")
 
     # Get thread name and determine if group
-    thread_name = thread.recipient.name[0].strip()
-    is_group = False
-    if thread.recipient.recipientId._id.startswith("__textsecure_group__"):
-        is_group = True
+    thread_name = thread.recipient.name.strip()
+    is_group = thread.recipient.isgroup
 
     # Create the message color CSS (depends on individuals)
     group_color_css = ""
@@ -125,7 +123,7 @@ def dump_thread(thread, output_dir):
         quote = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
             quote_author_id = msg.quote.author.recipientId._id
-            quote_author_name = msg.quote.author.name[0]
+            quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
                 name = "You"
             else:

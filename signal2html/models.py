@@ -47,6 +47,7 @@ class Recipient:
     recipientId: RecipientId
     name: str
     color: str
+    isgroup: bool
 
     def __hash__(self):
         return hash(self.recipientId)

@@ -4,6 +4,8 @@
 
 """
 
+import random
+
 CRIMSON = "#CC163D"
 CRIMSON_TINT = "#EDA6AE"
 CRIMSON_SHADE = "#8A0F29"
@@ -70,3 +72,7 @@ COLORMAP = {
     "ultramarine": ULTRAMARINE,
     "group_color": GROUP,
 }
+
+
+def get_random_color():
+    return random.choice(list(COLORMAP.keys()))
