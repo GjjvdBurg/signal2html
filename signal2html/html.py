@@ -76,7 +76,8 @@ def dump_thread(thread, output_dir):
             ar_color = ar.color
             if ar_color in colors_used:
                 color = next(
-                    (c for c in COLORMAP if not c in group_colors), None,
+                    (c for c in COLORMAP if not c in group_colors),
+                    None,
                 )
                 ar_color = ar.color if color is None else color
             group_color_css += msg_css % (idx, COLORMAP[ar_color])

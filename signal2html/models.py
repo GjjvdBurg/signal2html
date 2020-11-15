@@ -86,3 +86,7 @@ class Thread:
     recipient: Recipient  # need to deal with groups later
     mms: List[MMSMessageRecord] = field(default_factory=lambda: [])
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
+
+    @property
+    def name(self):
+        return self.recipient.name.strip()
