@@ -59,11 +59,7 @@ def dump_thread(thread, output_dir):
     )
     template = env.get_template("thread.html")
 
-    # Get thread name and determine if group
-    thread_name = thread.recipient.name[0].strip()
-    is_group = False
-    if thread.recipient.recipientId._id.startswith("__textsecure_group__"):
-        is_group = True
+    is_group = thread.recipient.isgroup
 
     # Create the message color CSS (depends on individuals)
     group_color_css = ""
@@ -116,7 +112,7 @@ def dump_thread(thread, output_dir):
         is_call = False
         if is_incoming_call(msg._type):
             is_call = True
-            msg.body = f"{thread_name} called you"
+            msg.body = f"{thread.name} called you"
         elif is_outgoing_call(msg._type):
             is_call = True
             msg.body = "You called"
@@ -128,7 +124,7 @@ def dump_thread(thread, output_dir):
         quote = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
             quote_author_id = msg.quote.author.recipientId._id
-            quote_author_name = msg.quote.author.name[0]
+            quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
                 name = "You"
             else:
@@ -177,13 +173,13 @@ def dump_thread(thread, output_dir):
         return
 
     html = template.render(
-        thread_name=thread_name,
+        thread_name=thread.name,
         messages=simple_messages,
         group_color_css=group_color_css,
     )
 
     filename = os.path.join(
-        output_dir, thread_name.replace(" ", "_") + ".html"
+        output_dir, thread.name.replace(" ", "_") + ".html"
     )
     with open(filename, "w", encoding="utf-8") as fp:
         fp.write(html)
