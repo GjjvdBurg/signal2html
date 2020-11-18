@@ -51,9 +51,9 @@ in a nice way.
 
 ## Notes
 
-This is a hastily-written script that has only been tested on my backup. I 
-hope it works on other backups as well, but if you encounter any issues please 
-submit a patch.
+This is a hastily-written script that has only been tested on a few Signal 
+database versions. I hope it works on other backup versions as well, but if 
+you encounter any issues please submit a pull request.
 
 See the LICENSE file for licensing details and copyright.
 
