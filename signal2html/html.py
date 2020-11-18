@@ -46,6 +46,8 @@ def format_emoji(body, is_quote=False):
 def dump_thread(thread, output_dir):
     """Write a Thread instance to a HTML page in the output directory """
 
+    os.makedirs(output_dir, exist_ok=True)
+
     # Combine and sort the messages
     messages = thread.mms + thread.sms
     messages.sort(key=lambda mr: mr.dateSent)

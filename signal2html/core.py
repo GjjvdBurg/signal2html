@@ -145,7 +145,9 @@ def get_attachment_filename(_id, unique_id, backup_dir):
     fname = f"Attachment_{_id}_{unique_id}.bin"
     pth = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(pth):
-        warnings.warn(f"Warning: couldn't find attachment {pth}!")
+        warnings.warn(
+            f"Warning: couldn't find attachment {pth}. Maybe it was deleted?"
+        )
         return None
     return pth
 
