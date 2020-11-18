@@ -47,6 +47,7 @@ class Recipient:
     recipientId: RecipientId
     name: str
     color: str
+    isgroup: bool
 
     def __hash__(self):
         return hash(self.recipientId)
@@ -88,4 +89,4 @@ class Thread:
 
     @property
     def name(self):
-        return self.recipient.name[0].strip() #TODO take version from feature/version_update
+        return self.recipient.name.strip()
