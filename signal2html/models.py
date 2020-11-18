@@ -83,7 +83,7 @@ class SMSMessageRecord(MessageRecord):
 @dataclass
 class Thread:
     _id: int
-    recipient: Recipient  # need to deal with groups later
+    recipient: Recipient
     mms: List[MMSMessageRecord] = field(default_factory=lambda: [])
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
 
