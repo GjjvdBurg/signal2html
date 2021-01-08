@@ -99,7 +99,8 @@ def make_recipient_v80(db, recipient_id):
     if name is None:
         if joined_name is None:
             name = str(recipient_id)
-        name = joined_name
+        else:
+            name = joined_name
 
     rid = RecipientId(recipient_id)
     return Recipient(rid, name=name, color=color, isgroup=isgroup)
