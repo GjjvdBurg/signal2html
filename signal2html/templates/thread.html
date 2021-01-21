@@ -4,11 +4,11 @@
       <audio controls>
         <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
       </audio>
-    {% elif attach.contentType == "video/mp4" %}
+    {% elif attach.contentType == "video/mp4" or attach.contentType == "video/3gpp" %}
       <video controls>
         <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
       </video>
-    {% elif attach.contentType == "image/jpeg" %}
+    {% elif attach.contentType == "image/jpeg" or attach.contentType == "image/png" or attach.contentType == "image/gif" %}
     <div class="msg-img-container">
       <input type="checkbox" id="zoomCheck-{{ attach.unique_id }}">
       <label for="zoomCheck-{{ attach.unique_id }}">
