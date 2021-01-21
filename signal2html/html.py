@@ -68,8 +68,9 @@ def dump_thread(thread, output_dir):
         colors_used = []
         group_colors = set(ar.color for ar in sender_idx)
         for ar, idx in sender_idx.items():
-            if ar.recipientId._id.startswith("__textsecure_group__"):
+            if ar.isgroup:
                 continue
+
             # ensure colors are unique, even if they're not in Signal
             ar_color = ar.color
             if ar_color in colors_used:
