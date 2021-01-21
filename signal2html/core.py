@@ -73,7 +73,7 @@ def make_recipient_v23(db, recipient_id):
         label = qry.fetchone()
         isgroup = False
 
-    name = recipient_id if label[0] is None else label[0]
+    name = str(recipient_id) if label[0] is None else label[0]
     color = get_color(db, recipient_id)
 
     rid = RecipientId(recipient_id)

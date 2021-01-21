@@ -153,7 +153,7 @@ def dump_thread(thread, output_dir):
             "date": date_sent,
             "attachments": [],
             "id": msg._id,
-            "name": aR.name[0],
+            "name": aR.name,
             "sender_idx": sender_idx[aR] if is_group else "0",
             "quote": quote,
         }
