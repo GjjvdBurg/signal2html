@@ -89,6 +89,7 @@ def make_recipient_v80(db, recipient_id):
     groupid, name, joined_name, color = qry.fetchone()
     if color is None:
         color = get_random_color()
+
     isgroup = groupid is not None
     if isgroup:
         qry = db.execute(
@@ -182,7 +183,9 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
         mms.attachments.append(a)
 
 
-def get_mms_records(db, thread, recipients, backup_dir, thread_dir, version=None):
+def get_mms_records(
+    db, thread, recipients, backup_dir, thread_dir, version=None
+):
     """ Collect all MMS records for a given thread """
     mms_records = []
     qry = db.execute(
@@ -242,8 +245,9 @@ def get_mms_records(db, thread, recipients, backup_dir, thread_dir, version=None
     return mms_records
 
 
-def populate_thread(db, thread, recipients, backup_dir, thread_dir, 
-        version=None):
+def populate_thread(
+    db, thread, recipients, backup_dir, thread_dir, version=None
+):
     """ Populate a thread with all corresponding messages """
     sms_records = get_sms_records(db, thread, version=version)
     mms_records = get_mms_records(
@@ -276,7 +280,9 @@ def process_backup(backup_dir, output_dir):
     for (_id, _), recipient in zip(threads, recipients):
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = os.path.join(output_dir, t.name.replace(" ", "_"))
-        populate_thread(db, t, recipients, backup_dir, thread_dir, version=db_version)
+        populate_thread(
+            db, t, recipients, backup_dir, thread_dir, version=db_version
+        )
         dump_thread(t, thread_dir)
 
     db.close()
