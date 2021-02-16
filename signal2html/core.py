@@ -158,7 +158,8 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     os.makedirs(target_dir, exist_ok=True)
     target = os.path.join(target_dir, fname)
     shutil.copy(source, target)
-    return target
+    url = '/'.join(['.', 'attachments', fname])
+    return url
 
 
 def add_mms_attachments(db, mms, backup_dir, thread_dir):
