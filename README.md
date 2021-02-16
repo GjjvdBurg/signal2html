@@ -57,4 +57,10 @@ you encounter any issues please submit a pull request.
 
 See the LICENSE file for licensing details and copyright.
 
+Please be aware that Signal messages are encrypted for a reason, and your 
+contacts may use it specifically because it provides significant privacy. By 
+exporting and decrypting your messages, you should take responsibility for 
+maintaining this same level of privacy (for instance by only storing the 
+plaintext messages on encypted volumes/drives).
+
 Author: [Gertjan van den Burg](gertjan.dev).
