@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.1.4
+
+* Replace absolute URLs for attachments with relative ones.
+
 ## Version 0.1.3
 
 * Fix fallback for recipient name (thanks to @Otto-AA!)
