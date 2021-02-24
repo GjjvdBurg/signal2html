@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.1.5
+
+* Add dataclasses dependency for python 3.6
+
 ## Version 0.1.4
 
 * Replace absolute URLs for attachments with relative ones.
