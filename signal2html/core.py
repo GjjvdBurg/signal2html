@@ -83,10 +83,10 @@ def make_recipient_v23(db, recipient_id):
 def make_recipient_v80(db, recipient_id):
     """Create a Recipient instance from a recipient id (db version 65, 80)"""
     qry = db.execute(
-        "SELECT group_id, system_display_name, profile_joined_name, color from recipient where _id=?",
+        "SELECT group_id, phone, system_display_name, profile_joined_name, color from recipient where _id=?",
         (recipient_id,),
     )
-    groupid, name, joined_name, color = qry.fetchone()
+    groupid, phone, name, joined_name, color = qry.fetchone()
     if color is None:
         color = get_random_color()
 
@@ -95,16 +95,22 @@ def make_recipient_v80(db, recipient_id):
         qry = db.execute(
             "SELECT title FROM groups WHERE group_id=?", (groupid,)
         )
-        name = qry.fetchone()[0]
+        res = qry.fetchone()
+        if res is not None:
+            name = res[0]
+        else:
+            warnings.warn(f"Group for recipient {recipient_id} is {groupid} which does not exist.")
 
     if name is None:
-        if joined_name is None:
-            name = str(recipient_id)
-        else:
+        if joined_name:
             name = joined_name
+        elif phone:
+            name = phone
+        else:
+            name = ""
 
     rid = RecipientId(recipient_id)
-    return Recipient(rid, name=name, color=color, isgroup=isgroup)
+    return Recipient(rid, name=name, color=color, isgroup=isgroup, phone=phone)
 
 
 def make_recipient(db, recipient_id, version=None):
@@ -280,7 +286,7 @@ def process_backup(backup_dir, output_dir):
     # Combine the recipient objects and the thread info into Thread objects
     for (_id, _), recipient in zip(threads, recipients):
         t = Thread(_id=_id, recipient=recipient)
-        thread_dir = os.path.join(output_dir, t.name.replace(" ", "_"))
+        thread_dir = os.path.join(output_dir, t.sanename)
         populate_thread(
             db, t, recipients, backup_dir, thread_dir, version=db_version
         )
