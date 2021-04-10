@@ -97,7 +97,7 @@ class Thread:
         Different strings can still clash in principle if they sanitize to the same string.
         """
         if self.recipient.phone:
-            return sub('[^]\\w!@#$%^&\'`.=+{}~()[-]', '_', normalize('NFKC', self.recipient.phone.strip()).lstrip(".#"))
+            return self._sanitize(self.recipient.phone)
         else:
             return '#' + self.recipient.recipientId._id
 
@@ -110,6 +110,14 @@ class Thread:
     def sanename(self):
         """Return a sanitized name or other useful identifier, suitable for use as filename, and fallback on rid."""
         if self.recipient.name:
-            return sub('[^]\\w!@#$%^&\'`.=+{}~()[-]', '_', normalize('NFKC', self.recipient.name.strip()).lstrip(".#"))
+            return self._sanitize(self.recipient.name)
         else:
             return '#' + self.recipient.recipientId._id
+
+    def _sanitize(self, text):
+        """Sanitize text to use as filename"""
+        clean = normalize('NFKC', text.strip())
+        clean = clean.lstrip(".#")
+        clean = sub('[^]\\w!@#$%^&\'`.=+{}~()[-]', '_', clean)
+        return clean
+
