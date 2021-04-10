@@ -40,7 +40,7 @@ def check_backup(backup_dir):
     # We have only ever seen database version 23, so we don't proceed if it's
     # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
-    if not version in ["23", "65", "80"]:
+    if not version in ["23", "65", "80", "89"]:
         warnings.warn(
             f"Warning: Found untested Signal database version: {version}."
         )
@@ -81,7 +81,7 @@ def make_recipient_v23(db, recipient_id):
 
 
 def make_recipient_v80(db, recipient_id):
-    """Create a Recipient instance from a recipient id (db version 65, 80)"""
+    """Create a Recipient instance from a recipient id (db version 65, 80, 89)"""
     qry = db.execute(
         "SELECT group_id, phone, system_display_name, profile_joined_name, color from recipient where _id=?",
         (recipient_id,),
@@ -116,7 +116,7 @@ def make_recipient_v80(db, recipient_id):
 def make_recipient(db, recipient_id, version=None):
     if version == "23":
         return make_recipient_v23(db, recipient_id)
-    elif version in ["65", "80"]:
+    elif version in ["65", "80", "89"]:
         return make_recipient_v80(db, recipient_id)
     else:
         warnings.warn(
