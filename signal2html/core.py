@@ -67,7 +67,9 @@ def make_recipient_v23(db, recipient_id):
         isgroup = True
     else:
         qry = db.execute(
-            "SELECT system_display_name FROM recipient_preferences WHERE recipient_ids=?",
+            "SELECT system_display_name "
+            "FROM recipient_preferences "
+            "WHERE recipient_ids=?",
             (recipient_id,),
         )
         label = qry.fetchone()
@@ -76,14 +78,21 @@ def make_recipient_v23(db, recipient_id):
     name = str(recipient_id) if label[0] is None else label[0]
     color = get_color(db, recipient_id)
 
+    phone = str(recipient_id)
     rid = RecipientId(recipient_id)
-    return Recipient(rid, name=name, color=color, isgroup=isgroup)
+    return Recipient(rid, name=name, color=color, isgroup=isgroup, phone=phone)
 
 
 def make_recipient_v80(db, recipient_id):
     """Create a Recipient instance from a recipient id (db version 65, 80, 89)"""
     qry = db.execute(
-        "SELECT group_id, phone, system_display_name, profile_joined_name, color from recipient where _id=?",
+        "SELECT group_id, "
+        "phone, "
+        "system_display_name, "
+        "profile_joined_name, "
+        "color "
+        "FROM recipient "
+        "WHERE _id=?",
         (recipient_id,),
     )
     groupid, phone, name, joined_name, color = qry.fetchone()
