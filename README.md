@@ -63,4 +63,4 @@ exporting and decrypting your messages, you should take responsibility for
 maintaining this same level of privacy (for instance by only storing the 
 plaintext messages on encypted volumes/drives).
 
-Author: [Gertjan van den Burg](gertjan.dev).
+Author: [Gertjan van den Burg](https://gertjan.dev).
