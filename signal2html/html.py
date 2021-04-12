@@ -2,7 +2,9 @@
 
 """Code for writing out the HTML
 
-Author: Gertjan van den Burg
+Author: G.J.J. van den Burg
+License: See LICENSE file.
+Copyright: 2020, G.J.J. van den Burg
 
 """
 

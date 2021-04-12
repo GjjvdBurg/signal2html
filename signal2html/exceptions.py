@@ -2,6 +2,10 @@
 
 """Various exceptions
 
+Author: G.J.J. van den Burg
+License: See LICENSE file.
+Copyright: 2020, G.J.J. van den Burg
+
 """
 
 

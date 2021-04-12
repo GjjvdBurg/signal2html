@@ -4,6 +4,10 @@
 
 These are extracted from the Signal Android app source code.
 
+Author: G.J.J. van den Burg
+License: See LICENSE file.
+Copyright: 2020, G.J.J. van den Burg
+
 """
 
 BASE_TYPE_MASK = 0x1F
