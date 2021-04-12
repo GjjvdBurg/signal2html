@@ -185,7 +185,8 @@ def dump_thread(thread, output_dir):
     # Use phone number to distinguish threads from the same contact,
     # except for groups, which do not have a phone number.
     filename = os.path.join(
-        output_dir, ( thread.sanename if thread.recipient.isgroup else thread.sanephone ) + ".html"
+        output_dir,
+        f"{thread.sanename if is_group else thread.sanephone}.html",
     )
     with open(filename, "w", encoding="utf-8") as fp:
         fp.write(html)

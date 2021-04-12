@@ -99,7 +99,9 @@ def make_recipient_v80(db, recipient_id):
         if res is not None:
             name = res[0]
         else:
-            warnings.warn(f"Group for recipient {recipient_id} is {groupid} which does not exist.")
+            warnings.warn(
+                f"Group for recipient {recipient_id} is {groupid} which does not exist."
+            )
 
     if name is None:
         if joined_name:
@@ -118,11 +120,11 @@ def make_recipient(db, recipient_id, version=None):
         return make_recipient_v23(db, recipient_id)
     elif version in ["65", "80", "89"]:
         return make_recipient_v80(db, recipient_id)
-    else:
-        warnings.warn(
-            f"Untested database version {version}, defaulting to latest known working version."
-        )
-        return make_recipient_v80(db, recipient_id)
+
+    warnings.warn(
+        f"Untested database version {version}, defaulting to latest known working version."
+    )
+    return make_recipient_v80(db, recipient_id)
 
 
 def get_sms_records(db, thread, version=None):
@@ -164,7 +166,7 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     os.makedirs(target_dir, exist_ok=True)
     target = os.path.join(target_dir, fname)
     shutil.copy(source, target)
-    url = '/'.join(['.', 'attachments', fname])
+    url = "/".join([".", "attachments", fname])
     return url
 
 

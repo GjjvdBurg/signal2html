@@ -19,6 +19,7 @@ from typing import List
 from re import sub
 from unicodedata import normalize
 
+
 @dataclass
 class RecipientId:
     _id: str  # phone number (?)
@@ -100,8 +101,7 @@ class Thread:
         """
         if self.recipient.phone:
             return self._sanitize(self.recipient.phone)
-        else:
-            return '#' + self.recipient.recipientId._id
+        return "#" + self.recipient.recipientId._id
 
     @property
     def name(self):
@@ -110,16 +110,15 @@ class Thread:
 
     @property
     def sanename(self):
-        """Return a sanitized name or other useful identifier, suitable for use as filename, and fallback on rid."""
+        """Return a sanitized name or other useful identifier, suitable for use
+        as filename, and fallback on rid."""
         if self.recipient.name:
             return self._sanitize(self.recipient.name)
-        else:
-            return '#' + self.recipient.recipientId._id
+        return "#" + self.recipient.recipientId._id
 
     def _sanitize(self, text):
         """Sanitize text to use as filename"""
-        clean = normalize('NFKC', text.strip())
+        clean = normalize("NFKC", text.strip())
         clean = clean.lstrip(".#")
-        clean = sub('[^]\\w!@#$%^&\'`.=+{}~()[-]', '_', clean)
+        clean = sub("[^]\\w!@#$%^&'`.=+{}~()[-]", "_", clean)
         return clean
-
