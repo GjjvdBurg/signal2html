@@ -14,7 +14,8 @@ Author: Gertjan van den Burg
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from typing import List
-
+from re import sub
+from unicodedata import normalize
 
 @dataclass
 class RecipientId:
@@ -48,6 +49,7 @@ class Recipient:
     name: str
     color: str
     isgroup: bool
+    phone: str
 
     def __hash__(self):
         return hash(self.recipientId)
@@ -88,5 +90,34 @@ class Thread:
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
 
     @property
+    def sanephone(self):
+        """Return a sanitized phone number suitable for use as filename, and fallback on rid.
+
+        NOTE: Phone numbers can be alphanumerical characters especially coming over SMS
+        Different strings can still clash in principle if they sanitize to the same string.
+        """
+        if self.recipient.phone:
+            return self._sanitize(self.recipient.phone)
+        else:
+            return '#' + self.recipient.recipientId._id
+
+    @property
     def name(self):
+        """Return the raw name or other useful identifier, suitable for display."""
         return self.recipient.name.strip()
+
+    @property
+    def sanename(self):
+        """Return a sanitized name or other useful identifier, suitable for use as filename, and fallback on rid."""
+        if self.recipient.name:
+            return self._sanitize(self.recipient.name)
+        else:
+            return '#' + self.recipient.recipientId._id
+
+    def _sanitize(self, text):
+        """Sanitize text to use as filename"""
+        clean = normalize('NFKC', text.strip())
+        clean = clean.lstrip(".#")
+        clean = sub('[^]\\w!@#$%^&\'`.=+{}~()[-]', '_', clean)
+        return clean
+
