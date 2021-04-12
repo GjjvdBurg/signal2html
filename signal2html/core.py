@@ -13,19 +13,17 @@ import warnings
 import sqlite3
 import shutil
 
-from .exceptions import (
-    DatabaseNotFound,
-    DatabaseVersionNotFound,
-)
-from .models import (
-    Attachment,
-    MMSMessageRecord,
-    Quote,
-    Recipient,
-    RecipientId,
-    SMSMessageRecord,
-    Thread,
-)
+from .exceptions import DatabaseNotFound
+from .exceptions import DatabaseVersionNotFound
+
+from .models import Attachment
+from .models import MMSMessageRecord
+from .models import Quote
+from .models import Recipient
+from .models import RecipientId
+from .models import SMSMessageRecord
+from .models import Thread
+
 from .html import dump_thread
 from .html_colors import get_random_color
 

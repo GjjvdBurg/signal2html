@@ -12,18 +12,18 @@ import os
 import datetime as dt
 
 from emoji import emoji_lis as emoji_list
-from jinja2 import Environment, PackageLoader, select_autoescape
+from jinja2 import Environment
+from jinja2 import PackageLoader
+from jinja2 import select_autoescape
 
-from .models import MMSMessageRecord
-from .types import (
-    get_named_message_type,
-    is_inbox_type,
-    is_incoming_call,
-    is_joined_type,
-    is_missed_call,
-    is_outgoing_call,
-)
 from .html_colors import COLORMAP
+from .models import MMSMessageRecord
+from .types import get_named_message_type
+from .types import is_inbox_type
+from .types import is_incoming_call
+from .types import is_joined_type
+from .types import is_missed_call
+from .types import is_outgoing_call
 
 
 def is_all_emoji(body):
