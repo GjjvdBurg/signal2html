@@ -180,8 +180,10 @@ def dump_thread(thread, output_dir):
 
     os.makedirs(output_dir, exist_ok=True)
 
+    # Use phone number to distinguish threads from the same contact,
+    # except for groups, which do not have a phone number.
     filename = os.path.join(
-        output_dir, thread.name.replace(" ", "_") + ".html"
+        output_dir, ( thread.sanename if thread.recipient.isgroup else thread.sanephone ) + ".html"
     )
     with open(filename, "w", encoding="utf-8") as fp:
         fp.write(html)
