@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.1.6
+
+* Use thread-specific filenames
+  ([#10](https://github.com/GjjvdBurg/signal2html/pull/10) thanks to 
+  @ericthegrey)
+
 ## Version 0.1.5
 
 * Add dataclasses dependency for python 3.6
