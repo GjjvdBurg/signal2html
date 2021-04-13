@@ -1,6 +1,6 @@
 {% macro attachment(attach) -%}
   <div class="attachment">
-    {% if attach.voiceNote %}
+    {% if attach.voiceNote or attach.contentType == "audio/mpeg" %}
       <audio controls>
         <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
       </audio>
