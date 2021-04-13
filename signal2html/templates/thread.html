@@ -3,18 +3,22 @@
     {% if attach.voiceNote %}
       <audio controls>
         <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+        Audio of type {{ attach.contentType }} <span class="msg-dl-link"><a href="{{ attach.fileName }}" type="{{ attach.contentType }}">&#x2913;</a></span>
       </audio>
     {% elif attach.contentType == "video/mp4" or attach.contentType == "video/3gpp" %}
       <video controls>
         <source src="{{ attach.fileName }}" type="{{ attach.contentType }}">
+        Video of type {{ attach.contentType }} <span class="msg-dl-link"><a href="{{ attach.fileName }}" type="{{ attach.contentType }}">&#x2913;</a></span>
       </video>
-    {% elif attach.contentType == "image/jpeg" or attach.contentType == "image/png" or attach.contentType == "image/gif" %}
+    {% elif attach.contentType == "image/jpeg" or attach.contentType == "image/png" or attach.contentType == "image/gif" or attach.contentType == "image/webp" %}
     <div class="msg-img-container">
       <input type="checkbox" id="zoomCheck-{{ attach.unique_id }}">
       <label for="zoomCheck-{{ attach.unique_id }}">
         <img src="{{ attach.fileName }}">
       </label>
     </div>
+    {% else %}
+      Attachment of type {{ attach.contentType }} <span class="msg-dl-link"><a href="{{ attach.fileName }}" type="{{ attach.contentType }}" download>&#x2913;</a></span>
     {% endif %}
   </div>
 {%- endmacro %}
@@ -78,6 +82,11 @@
         font-size: x-small;
         opacity: 50%;
         align-self: center;
+      }
+
+      .msg-dl-link a {
+        font-size: xx-large;
+        text-decoration: none;
       }
 
       .msg-name {
