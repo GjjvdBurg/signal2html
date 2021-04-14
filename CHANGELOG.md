@@ -1,5 +1,12 @@
 # Changelog
 
+## Version 0.1.8
+
+* Add a fallback to download attachment of that are not image/audio/video, and 
+  add support for showing stickers 
+  ([#11](https://github.com/GjjvdBurg/signal2html/pull/11) thanks to 
+  @ericthegrey)
+
 ## Version 0.1.7
 
 * Add phone field for quote author (bugfix)
