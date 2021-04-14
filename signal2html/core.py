@@ -239,7 +239,11 @@ def get_mms_records(
                 # recipient object for this person.
                 rid = RecipientId(quote_author)
                 quote_auth = Recipient(
-                    rid, quote_author, color=None, isgroup=False
+                    rid,
+                    quote_author,
+                    color=None,
+                    isgroup=False,
+                    phone=str(quote_author),
                 )
             quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
