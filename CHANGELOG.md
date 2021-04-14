@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.1.7
+
+* Add phone field for quote author (bugfix)
+
 ## Version 0.1.6
 
 * Use thread-specific filenames
