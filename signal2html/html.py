@@ -32,14 +32,29 @@ def is_all_emoji(body):
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
-def format_emoji(body, is_quote=False):
-    """ Wrap emoji in <span> so we can style it easily """
+def format_message(body, is_quote=False):
+    """Format message by processing all characters.
+
+    - Wrap emoji in <span> for styling them
+    - Escape special HTML chars
+    """
     emoji_pos = emoji_list(body)
     new_body = ""
     emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
+    skip = 0
     for i, c in enumerate(body):
-        if i in emoji_lookup:
+        if skip > 0:
+            # Skip additional characters from multi-character emoji
+            skip = skip - 1
+        elif i in emoji_lookup:
             new_body += "<span class='msg-emoji'>%s</span>" % emoji_lookup[i]
+            skip = len(emoji_lookup[i]) - 1
+        elif c == "&":
+            new_body += "&amp;"
+        elif c == "<":
+            new_body += "&lt;"
+        elif c == ">":
+            new_body += "&gt;"
         else:
             new_body += c
     return new_body
@@ -133,7 +148,7 @@ def dump_thread(thread, output_dir):
                 name = quote_author_name
             quote = {
                 "name": name,
-                "body": format_emoji(msg.quote.text),
+                "body": format_message(msg.quote.text),
                 "attachments": [],
             }
 
@@ -143,7 +158,7 @@ def dump_thread(thread, output_dir):
             all_emoji = not msg.quote and is_all_emoji(body)
         else:
             all_emoji = is_all_emoji(body)
-        body = format_emoji(body)
+        body = format_message(body)
 
         # Create message dictionary
         aR = msg.addressRecipient
