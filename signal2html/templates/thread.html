@@ -139,6 +139,65 @@
         position: relative;
       }
 
+      .msg-reactions {
+        margin-top: 5px;
+        text-align: right;
+      }
+
+      .msg-reaction {
+        padding-left: 8px;
+        padding-right: 8px;
+        background-color: #cccccc;
+        border-radius: 1em;
+        border: 1px solid white;
+        line-height: 150%;
+      }
+
+      .msg-reaction-self {
+        background-color: #aaaaaa;
+      }
+
+      .msg-reaction {
+        position: relative;
+      }
+
+      .msg-reaction .msg-reaction-info {
+        display: block;
+        position: absolute;
+        z-index: 1;
+        visibility: hidden;
+        width: 200px;
+        background-color: #505050;
+        color: white;
+        font-weight: bold;
+        text-align: center;
+        padding: 5px 0;
+        border-radius: 3px;
+        margin-left: -100px;
+        bottom: 125%;
+        left: 50%;
+
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      /* Draw an arrow using border styles */
+      .msg-reaction .msg-reaction-info::before {
+        content: "";
+        position: absolute;
+        top: 100%;
+        left: 50%;
+        margin-left: -5px;
+        border-width: 5px;
+        border-style: solid;
+        border-color: #505050 transparent transparent transparent;
+      }
+
+      .msg-reaction:hover .msg-reaction-info {
+        visibility: visible;
+        opacity: 1;
+      }
+          
       .msg-quote {
         display: flex;
         width: 98%;
@@ -252,6 +311,13 @@
           </div>
          {% endif %}
          <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
+         {% if msg.reactions %}
+         <div class="msg-reactions">
+          {% for reaction in msg.reactions %}
+          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}<span style="color: {{reaction.color}};" class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span></span>
+          {% endfor %}
+         </div>
+         {% endif %}
        </div>
       {% endif %}
       {% endfor %}

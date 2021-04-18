@@ -184,15 +184,27 @@ def dump_thread(thread, output_dir):
             "name": aR.name,
             "sender_idx": sender_idx[aR] if is_group else "0",
             "quote": quote,
+            "reactions": [],
         }
 
-        # Add attachments
+        # Add attachments and reactions
         if isinstance(msg, MMSMessageRecord):
             for a in msg.attachments:
                 if a.quote:
                     out["quote"]["attachments"].append(a)
                 else:
                     out["attachments"].append(a)
+
+            for r in msg.reactions:
+                out["reactions"].append(
+                    {
+                        "name": r.rid.name,
+                        "color": COLORMAP[r.rid.color],
+                        "what": r.what,
+                        "time_sent": r.time_sent,
+                        "time_received": r.time_received,
+                    }
+                )
 
         simple_messages.append(out)
 

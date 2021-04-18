@@ -15,6 +15,7 @@ class VersionInfo(object):
         """Returns whether the database version has been tested.
 
         Testing and pull requests welcome."""
+
         return self.version in [18, 23, 65, 80, 89]
 
     def is_addressbook_using_rids(self) -> bool:
@@ -25,3 +26,8 @@ class VersionInfo(object):
         version 23 and at the latest at version 65."""
 
         return self.version > 23
+
+    def get_reactions_query_column(self) -> str:
+        """Returns a SQL expression to retrieve reactions to MMS messages."""
+
+        return "reactions" if self.version >= 89 else "''"
