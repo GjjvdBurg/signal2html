@@ -64,6 +64,13 @@
         padding: 10px;
       }
 
+      .msg pre {
+        font-family: Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        white-space: pre-wrap;
+        margin-top: 0px;
+        margin-bottom: 5px;
+      }
+
       .msg-date {
         font-size: x-small;
         opacity: 50%;
@@ -215,7 +222,7 @@
           <div class="msg-quote">
             <div class="msg-quote-message">
               <span class="msg-name">{{ msg.quote.name }}</span>
-              <p>{{ msg.quote.body | safe }}</p>
+              <pre>{{ msg.quote.body | safe }}</pre>
             </div>
             {% if msg.quote.attachments %}
               <div class="msg-quote-attach">
@@ -236,12 +243,12 @@
          {% endif %}
          {% if msg.body %}
           {% if msg.isAllEmoji %}
-            <p class="msg-all-emoji">
+            <div class="msg-all-emoji">
           {% else %}
-            <p>
+            <div>
           {% endif %}
-          {{ msg.body | safe }}
-          </p>
+          <pre>{{ msg.body | safe }}</pre>
+          </div>
          {% endif %}
          <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
        </div>
