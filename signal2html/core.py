@@ -141,17 +141,16 @@ def make_addressbook(
     db, version, groups_by_id, rid_to_recipient, phone_to_rid
 ):
     if version == "23":
-        return make_addressbook_v23(
-            db, version, groups_by_id, rid_to_recipient
-        )
+        make_addressbook_v23(db, version, groups_by_id, rid_to_recipient)
     elif version in ["65", "80", "89"]:
-        return make_addressbook_v80(
+        make_addressbook_v80(
             db, version, groups_by_id, rid_to_recipient, phone_to_rid
         )
-
-    return make_addressbook_v80(
-        db, groups_by_id, version, rid_to_recipient, phone_to_rid
-    )
+    else:
+        # Try latest version
+        make_addressbook_v80(
+            db, version, groups_by_id, rid_to_recipient, phone_to_rid
+        )
 
 
 def get_color(db, recipient_id):
@@ -399,10 +398,10 @@ def process_backup(backup_dir, output_dir):
 
     # Get and index all contact names
     groups_by_id = make_group_dict(db, version=db_version)
+
     rid_to_recipient: dict(str, Recipient) = {}
     phone_to_rid: dict(str, str) = {}
-
-    addressbook_by_rid = make_addressbook(
+    make_addressbook(
         db, db_version, groups_by_id, rid_to_recipient, phone_to_rid
     )
 
