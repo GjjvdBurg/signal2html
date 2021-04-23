@@ -83,7 +83,7 @@ def dump_thread(thread, output_dir):
                 ar_color = ar.color if color is None else color
             group_color_css += msg_css % (
                 idx,
-                ar.recipientId._id,
+                ar.rid,
                 COLORMAP[ar_color],
             )
             colors_used.append(ar.color)
@@ -97,7 +97,7 @@ def dump_thread(thread, output_dir):
             clr = "teal" if clr is None else clr
             group_color_css += msg_css % (
                 0,
-                firstInbox.addressRecipient.recipientId._id,
+                firstInbox.addressRecipient.rid,
                 COLORMAP[clr],
             )
 
@@ -135,7 +135,7 @@ def dump_thread(thread, output_dir):
         # Deal with quoted messages
         quote = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
-            quote_author_id = msg.quote.author.recipientId._id
+            quote_author_id = msg.quote.author.rid
             quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
                 name = "You"

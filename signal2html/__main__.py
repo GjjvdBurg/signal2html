@@ -8,6 +8,7 @@ Copyright: 2020, G.J.J. van den Burg
 """
 
 import sys
+import logging
 
 
 def main():
@@ -17,4 +18,5 @@ def main():
 
 
 if __name__ == "__main__":
+    logging.basicConfig(level=logging.INFO)
     main()
