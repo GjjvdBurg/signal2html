@@ -70,8 +70,6 @@ def get_sms_records(db, thread, addressbook, version=None):
     qry_res = sms_qry.fetchall()
     for _id, address, date, date_sent, body, _type in qry_res:
         sms_auth = addressbook.get_recipient_by_address(address)
-        if sms_auth is None:
-            print(f"No author for address {address}")
         sms = SMSMessageRecord(
             _id=_id,
             addressRecipient=sms_auth,
@@ -208,14 +206,7 @@ def process_backup(backup_dir, output_dir):
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
 
-    # Get and index all contact names
-    # groups_by_id = make_group_dict(db, version=db_version)
-
-    # rid_to_recipient: dict(str, Recipient) = {}
-    # phone_to_rid: dict(str, str) = {}
-    # make_addressbook(
-    #    db, db_version, groups_by_id, rid_to_recipient, phone_to_rid
-    # )
+    # Get and index all contact and group names
     addressbook: Addressbook = make_addressbook(db, db_version)
 
     # Start by getting the Threads from the database
