@@ -42,7 +42,7 @@ def check_backup(backup_dir):
     # We have only ever seen database version 23, so we don't proceed if it's
     # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
-    if not version in ["23", "65", "80", "89"]:
+    if not version in ["18", "23", "65", "80", "89"]:
         warnings.warn(
             f"Warning: Found untested Signal database version: {version}."
         )
