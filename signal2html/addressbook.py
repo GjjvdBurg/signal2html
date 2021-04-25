@@ -14,7 +14,15 @@ from .models import Recipient
 
 
 class Addressbook(object):
+    """Abstract class that store contacts and groups.
+
+    Note: subclasses must implement at a minimum:
+
+    - `_load_recipients()` to load all recipients
+    - `get_recipient_by_address()` to return a specific recipient"""
+
     def __init__(self, db, version):
+        """Initializes the addressbook and load all known recipients."""
         self.logger = logging.getLogger(__name__)
         self.db = db
         self.version = int(version)
@@ -23,10 +31,32 @@ class Addressbook(object):
         self.groups: dict[int, str] = {}
 
         self._load_groups()
-        self._load_recipients()
+        self._load_recipients()  # Must be implemented by subclass
         self.next_rid = 10000
 
+    def get_group_title(self, group_id: str) -> str:
+        """Retrieves the title of a group given the group_id (long
+        hexadecimal-based identifier)."""
+        return self.groups.get(group_id)
+
+    def get_recipient_by_address(self, address: str) -> Recipient:
+        """Returns a Recipient object that matches the address provided.
+
+        The address is the kind of information found in the address field
+        of the mms/sms message tables, but also in recipient_ids of the
+        thread table.
+
+        If an address is provided that does not exist in the addressbook,
+        it is created on the spot."""
+        raise NotImplementedError  # Override in subclasses
+
+    def get_recipient_by_phone(self, phone: str) -> Recipient:
+        """Returns a Recipient object that matches the phone number provided."""
+        rid = self.phone_to_rid.get(phone)
+        return self.rid_to_recipient.get(rid)
+
     def _add_recipient(self, recipient_id, name, color, isgroup, phone):
+        """Adds a recipient to the internal data structures."""
         recipient = Recipient(
             recipient_id, name=name, color=color, isgroup=isgroup, phone=phone
         )
@@ -41,6 +71,7 @@ class Addressbook(object):
         return recipient
 
     def _get_friendly_name_for_group(self, address: str):
+        """Creates a readable group name, either the title or a name derived from the group id."""
         name = self.get_group_title(address)
         if not name:
             gid = self._get_group_id(address)
@@ -50,6 +81,7 @@ class Addressbook(object):
                 return ""
 
     def _get_group_id(self, group_id: str) -> str:
+        """Gets the integer ID of a group from the Signal database."""
         qry = self.db.execute(
             "SELECT group_id, _id FROM groups WHERE group_id LIKE ?",
             (f"{group_id}",),
@@ -59,68 +91,38 @@ class Addressbook(object):
             return str(qry_res[1])
 
     def _get_new_rid(self) -> str:
+        """Creates a new recipient ID for recipients not in the initial
+        addressbook."""
         while self.rid_to_recipient.get(str(self.next_rid)):
             self.next_rid += 1
 
         return str(self.next_rid)
 
     def _get_unique_group_id(self, group_id: str) -> str:
+        """Given a group ID, returns a unique identifier for the group.
+
+        Group IDs are currently comprised of a type, followed by '!', followed
+        by an hexadecimal identifier.
+
+        NOTE: This method currently returns the group id itself, but might be
+        used to merge groups that share the same hexadecimal identifier."""
         return group_id
 
     def _load_groups(self):
+        """Loads all group names (a.k.a. titles)."""
         qry = self.db.execute("SELECT group_id, title FROM groups")
         qry_res = qry.fetchall()
         for group_id, title in qry_res:
             self.groups[self._get_unique_group_id(group_id)] = title
 
-    def get_group_title(self, group_id: str) -> str:
-        return self.groups.get(group_id)
-
-    def get_recipient_by_phone(self, phone: str) -> Recipient:
-        rid = self.phone_to_rid.get(phone)
-        return self.rid_to_recipient.get(rid)
-
 
 class AddressbookV1(Addressbook):
-    def _isgroup(self, address: str) -> bool:
-        return address.startswith(
-            "__textsecure_group__"
-        ) or address.startswith("__signal_mms_group__")
-
-    def _load_recipients(self):
-        qry = self.db.execute(
-            "SELECT _id, recipient_ids, system_display_name, color, signal_profile_name "
-            "FROM recipient_preferences "
-        )
-        qry_res = qry.fetchall()
-
-        for (
-            recipient_id,
-            phone,
-            system_display_name,
-            color,
-            profile_name,
-        ) in qry_res:
-            isgroup = self._isgroup(phone)
-            if isgroup:
-                phone = self._get_unique_group_id(phone)
-                name = self.get_group_title(phone)
-                if name is None:
-                    name = self._get_friendly_name_for_group(phone)
-                    self.logger.warn(
-                        f"Group for recipient {recipient_id} will be named '{name}'."
-                    )
-            else:
-                name = system_display_name or profile_name or phone or ""
-
-            if color is None:
-                color = get_random_color()
-
-            self._add_recipient(recipient_id, name, color, isgroup, phone)
-
     def get_recipient_by_address(self, address: str) -> Recipient:
+        """In this database version, all addresses are directly phone numbers
+        or group_id's and creating them might happen if no preferences were
+        stored for the particular address."""
+
         isgroup = self._isgroup(address)
-        # For V1, address is a phone (or groupid)
         if isgroup:
             phone = self._get_unique_group_id(address)
         else:
@@ -155,12 +157,74 @@ class AddressbookV1(Addressbook):
         else:
             return recipient
 
+    def _isgroup(self, address: str) -> bool:
+        """Decides whether an address refers to a group."""
+        return address.startswith(
+            "__textsecure_group__"
+        ) or address.startswith("__signal_mms_group__")
+
+    def _load_recipients(self):
+        """Load all recipients in the recipient_preferences table.
+
+        In this version of the database, it is normal for recipients in other
+        tables not to be found in this table."""
+        qry = self.db.execute(
+            "SELECT _id, recipient_ids, system_display_name, color, signal_profile_name "
+            "FROM recipient_preferences "
+        )
+        qry_res = qry.fetchall()
+
+        for (
+            recipient_id,
+            phone,
+            system_display_name,
+            color,
+            profile_name,
+        ) in qry_res:
+            isgroup = self._isgroup(phone)
+            if isgroup:
+                phone = self._get_unique_group_id(phone)
+                name = self.get_group_title(phone)
+                if name is None:
+                    name = self._get_friendly_name_for_group(phone)
+                    self.logger.warn(
+                        f"Group for recipient {recipient_id} will be named '{name}'."
+                    )
+            else:
+                name = system_display_name or profile_name or phone or ""
+
+            if color is None:
+                color = get_random_color()
+
+            self._add_recipient(recipient_id, name, color, isgroup, phone)
+
 
 class AddressbookV2(Addressbook):
+    def get_recipient_by_address(self, address: str) -> Recipient:
+        """In this database version, all addresses are recipient_id's and
+        creating them here is not expected to happen."""
+
+        rid = address
+        recipient = self.rid_to_recipient.get(rid)
+
+        if recipient is None:
+            # Create on the spot, but not expected to happen
+            self.logger.warn(
+                f"Recipient with rid {address} not in addressbook, adding it."
+            )
+            return self._add_recipient(rid, "", get_random_color(), False, "")
+        else:
+            return recipient
+
     def _isgroup(self, group_id) -> bool:
+        """Decides whether a group_id refers to a group."""
         return group_id is not None
 
     def _load_recipients(self):
+        """Load all recipients in the recipient table.
+
+        In this version of the database, all recipients references should be
+        found in this table."""
         qry = self.db.execute(
             "SELECT _id, group_id, "
             "phone, "
@@ -201,23 +265,11 @@ class AddressbookV2(Addressbook):
 
             self._add_recipient(recipient_id, name, color, isgroup, phone)
 
-    def get_recipient_by_address(self, address: str) -> Recipient:
-        # For V2, address is a recipient_id
-        rid = address
-        recipient = self.rid_to_recipient.get(rid)
-
-        if recipient is None:
-            # Create on the spot, but not expected to happen
-            self.logger.warn(
-                f"Recipient with rid {address} not in addressbook, adding it."
-            )
-            return self._add_recipient(rid, "", get_random_color(), False, "")
-        else:
-            return recipient
-
 
 def make_addressbook(db, version):
-    """Factory function for Addressbook"""
+    """Factory function for Addressbook.
+
+    The returned implementation depends on the version of the Signal database."""
     if int(version) <= 23:
         return AddressbookV1(db, version)
     else:
