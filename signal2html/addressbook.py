@@ -4,13 +4,14 @@ License: See LICENSE file.
 
 """
 
+import abc
 import logging
 
 from .html_colors import get_random_color
 from .models import Recipient
 
 
-class Addressbook(object):
+class Addressbook(metaclass=abc.ABCMeta):
     """Abstract class that store contacts and groups.
 
     Note: subclasses must implement at a minimum:
@@ -31,11 +32,16 @@ class Addressbook(object):
         self._load_recipients()  # Must be implemented by subclass
         self.next_rid = 10000
 
+    @abc.abstractmethod
+    def _load_recipients():
+        """Load all recipients in the recipient_preferences table."""
+
     def get_group_title(self, group_id: str) -> str:
         """Retrieves the title of a group given the group_id (long
         hexadecimal-based identifier)."""
         return self.groups.get(group_id)
 
+    @abc.abstractmethod
     def get_recipient_by_address(self, address: str) -> Recipient:
         """Returns a Recipient object that matches the address provided.
 
@@ -45,7 +51,6 @@ class Addressbook(object):
 
         If an address is provided that does not exist in the addressbook,
         it is created on the spot."""
-        raise NotImplementedError  # Override in subclasses
 
     def get_recipient_by_phone(self, phone: str) -> Recipient:
         """Returns a Recipient object that matches the phone number provided."""
@@ -263,11 +268,10 @@ class AddressbookV2(Addressbook):
             self._add_recipient(recipient_id, name, color, isgroup, phone)
 
 
-def make_addressbook(db, version):
+def make_addressbook(db, version) -> Addressbook:
     """Factory function for Addressbook.
 
     The returned implementation depends on the version of the Signal database."""
     if int(version) <= 23:
         return AddressbookV1(db, version)
-    else:
-        return AddressbookV2(db, version)
+    return AddressbookV2(db, version)
