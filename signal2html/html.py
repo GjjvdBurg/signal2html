@@ -78,7 +78,7 @@ def dump_thread(thread, output_dir):
 
     # Create the message color CSS (depends on individuals)
     group_color_css = ""
-    msg_css = ".msg-sender-%i { background: %s; }\n"
+    msg_css = ".msg-sender-%i { /* recipient id: %5s */ background: %s;}\n"
     if is_group:
         group_recipients = set(m.addressRecipient for m in messages)
         sender_idx = {r: k for k, r in enumerate(group_recipients)}
@@ -96,15 +96,25 @@ def dump_thread(thread, output_dir):
                     None,
                 )
                 ar_color = ar.color if color is None else color
-            group_color_css += msg_css % (idx, COLORMAP[ar_color])
+            group_color_css += msg_css % (
+                idx,
+                ar.rid,
+                COLORMAP[ar_color],
+            )
             colors_used.append(ar.color)
     else:
+        # Retrieve sender info from an incoming message, if any
         firstInbox = next(
             (m for m in messages if is_inbox_type(m._type)), None
         )
-        clr = firstInbox.addressRecipient.color if firstInbox else "teal"
-        clr = "teal" if clr is None else clr
-        group_color_css += msg_css % (0, COLORMAP[clr])
+        if firstInbox:
+            clr = firstInbox.addressRecipient.color
+            clr = "teal" if clr is None else clr
+            group_color_css += msg_css % (
+                0,
+                firstInbox.addressRecipient.rid,
+                COLORMAP[clr],
+            )
 
     # Create a simplified dict for each message
     prev_date = None
@@ -140,7 +150,7 @@ def dump_thread(thread, output_dir):
         # Deal with quoted messages
         quote = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
-            quote_author_id = msg.quote.author.recipientId._id
+            quote_author_id = msg.quote.author.rid
             quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
                 name = "You"

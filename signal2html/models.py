@@ -48,14 +48,14 @@ class Attachment:
 
 @dataclass
 class Recipient:
-    recipientId: RecipientId
+    rid: int
     name: str
     color: str
     isgroup: bool
     phone: str
 
     def __hash__(self):
-        return hash(self.recipientId)
+        return hash(self.rid)
 
 
 @dataclass
@@ -101,7 +101,7 @@ class Thread:
         """
         if self.recipient.phone:
             return self._sanitize(self.recipient.phone)
-        return "#" + self.recipient.recipientId._id
+        return "#" + str(self.recipient.rid)
 
     @property
     def name(self):
@@ -114,7 +114,7 @@ class Thread:
         as filename, and fallback on rid."""
         if self.recipient.name:
             return self._sanitize(self.recipient.name)
-        return "#" + self.recipient.recipientId._id
+        return "#" + str(self.recipient.rid)
 
     def _sanitize(self, text):
         """Sanitize text to use as filename"""

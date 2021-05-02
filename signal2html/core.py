@@ -13,6 +13,8 @@ import warnings
 import sqlite3
 import shutil
 
+from .addressbook import make_addressbook
+
 from .exceptions import DatabaseNotFound
 from .exceptions import DatabaseVersionNotFound
 
@@ -40,7 +42,7 @@ def check_backup(backup_dir):
     # We have only ever seen database version 23, so we don't proceed if it's
     # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
-    if not version in ["23", "65", "80", "89"]:
+    if not version in ["18", "23", "65", "80", "89"]:
         warnings.warn(
             f"Warning: Found untested Signal database version: {version}."
         )
@@ -57,86 +59,7 @@ def get_color(db, recipient_id):
     return color
 
 
-def make_recipient_v23(db, recipient_id):
-    """ Create a Recipient instance from a given recipient id (db version 23)"""
-    if recipient_id.startswith("__textsecure_group__"):
-        qry = db.execute(
-            "SELECT title FROM groups WHERE group_id=?", (recipient_id,)
-        )
-        label = qry.fetchone()
-        isgroup = True
-    else:
-        qry = db.execute(
-            "SELECT system_display_name "
-            "FROM recipient_preferences "
-            "WHERE recipient_ids=?",
-            (recipient_id,),
-        )
-        label = qry.fetchone()
-        isgroup = False
-
-    name = str(recipient_id) if label[0] is None else label[0]
-    color = get_color(db, recipient_id)
-
-    phone = str(recipient_id)
-    rid = RecipientId(recipient_id)
-    return Recipient(rid, name=name, color=color, isgroup=isgroup, phone=phone)
-
-
-def make_recipient_v80(db, recipient_id):
-    """Create a Recipient instance from a recipient id (db version 65, 80, 89)"""
-    qry = db.execute(
-        "SELECT group_id, "
-        "phone, "
-        "system_display_name, "
-        "profile_joined_name, "
-        "color "
-        "FROM recipient "
-        "WHERE _id=?",
-        (recipient_id,),
-    )
-    groupid, phone, name, joined_name, color = qry.fetchone()
-    if color is None:
-        color = get_random_color()
-
-    isgroup = groupid is not None
-    if isgroup:
-        qry = db.execute(
-            "SELECT title FROM groups WHERE group_id=?", (groupid,)
-        )
-        res = qry.fetchone()
-        if res is not None:
-            name = res[0]
-        else:
-            warnings.warn(
-                f"Group for recipient {recipient_id} is {groupid} which does not exist."
-            )
-
-    if name is None:
-        if joined_name:
-            name = joined_name
-        elif phone:
-            name = phone
-        else:
-            name = ""
-
-    rid = RecipientId(recipient_id)
-    return Recipient(rid, name=name, color=color, isgroup=isgroup, phone=phone)
-
-
-def make_recipient(db, recipient_id, version=None):
-    if version == "23":
-        return make_recipient_v23(db, recipient_id)
-    elif version in ["65", "80", "89"]:
-        return make_recipient_v80(db, recipient_id)
-
-    warnings.warn(
-        f"Untested database version {version}, defaulting to latest known working version."
-    )
-    return make_recipient_v80(db, recipient_id)
-
-
-def get_sms_records(db, thread, version=None):
+def get_sms_records(db, thread, addressbook, version=None):
     """ Collect all the SMS records for a given thread """
     sms_records = []
     sms_qry = db.execute(
@@ -146,9 +69,10 @@ def get_sms_records(db, thread, version=None):
     )
     qry_res = sms_qry.fetchall()
     for _id, address, date, date_sent, body, _type in qry_res:
+        sms_auth = addressbook.get_recipient_by_address(address)
         sms = SMSMessageRecord(
             _id=_id,
-            addressRecipient=make_recipient(db, address, version=version),
+            addressRecipient=sms_auth,
             recipient=thread.recipient,
             dateSent=date_sent,
             dateReceived=date,
@@ -202,7 +126,7 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
 
 
 def get_mms_records(
-    db, thread, recipients, backup_dir, thread_dir, version=None
+    db, thread, addressbook, backup_dir, thread_dir, version=None
 ):
     """ Collect all MMS records for a given thread """
     mms_records = []
@@ -225,14 +149,7 @@ def get_mms_records(
     ) in qry_res:
         quote = None
         if quote_id:
-            quote_auth = next(
-                (
-                    r
-                    for r in recipients
-                    if str(r.recipientId._id) == str(quote_author)
-                ),
-                None,
-            )
+            quote_auth = addressbook.get_recipient_by_address(quote_author)
             if quote_auth is None:
                 # Quote is from someone who isn't a recipient (e.g. a friend
                 # quotes a third person in a group). We'll just create a
@@ -247,9 +164,10 @@ def get_mms_records(
                 )
             quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
+        mms_auth = addressbook.get_recipient_by_address(address)
         mms = MMSMessageRecord(
             _id=_id,
-            addressRecipient=make_recipient(db, address, version=version),
+            addressRecipient=mms_auth,
             recipient=thread.recipient,
             dateSent=date,
             dateReceived=date_received,
@@ -268,12 +186,12 @@ def get_mms_records(
 
 
 def populate_thread(
-    db, thread, recipients, backup_dir, thread_dir, version=None
+    db, thread, addressbook, backup_dir, thread_dir, version=None
 ):
     """ Populate a thread with all corresponding messages """
-    sms_records = get_sms_records(db, thread, version=version)
+    sms_records = get_sms_records(db, thread, addressbook, version=version)
     mms_records = get_mms_records(
-        db, thread, recipients, backup_dir, thread_dir, version=version
+        db, thread, addressbook, backup_dir, thread_dir, version=version
     )
     thread.sms = sms_records
     thread.mms = mms_records
@@ -288,22 +206,23 @@ def process_backup(backup_dir, output_dir):
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
 
+    # Get and index all contact and group names
+    addressbook: Addressbook = make_addressbook(db, db_version)
+
     # Start by getting the Threads from the database
     query = db.execute("SELECT _id, recipient_ids FROM thread")
     threads = query.fetchall()
 
-    # Now turn the recipients from the threads into Recipient classes
-    recipients = []
-    for _, recipient_id in threads:
-        r = make_recipient(db, recipient_id, version=db_version)
-        recipients.append(r)
-
     # Combine the recipient objects and the thread info into Thread objects
-    for (_id, _), recipient in zip(threads, recipients):
+    for (_id, recipient_id) in threads:
+        recipient = addressbook.get_recipient_by_address(recipient_id)
+        if recipient is None:
+            print(f"No recipient with address {recipient_id}")
+
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = os.path.join(output_dir, t.sanename)
         populate_thread(
-            db, t, recipients, backup_dir, thread_dir, version=db_version
+            db, t, addressbook, backup_dir, thread_dir, version=db_version
         )
         dump_thread(t, thread_dir)
 
