@@ -1,5 +1,8 @@
 # signal2html: Convert Signal backups to pretty HTML
 
+[![PyPI version](https://badge.fury.io/py/signal2html.svg)](https://pypi.org/project/signal2html)
+[![Downloads](https://pepy.tech/badge/signal2html)](https://pepy.tech/project/signal2html)
+
 This is a Python script to convert a backup of [Signal](https://signal.org/) 
 messages to pretty HTML:
 
