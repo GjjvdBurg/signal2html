@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.2.0
+
+* Clean up code using an Addressbook class for recipients (thanks to 
+  @ericthegrey [#15](https://github.com/GjjvdBurg/signal2html/pull/15)).
+
 ## Version 0.1.8
 
 * Add a fallback to download attachment of that are not image/audio/video, and 
