@@ -27,7 +27,6 @@ from .models import SMSMessageRecord
 from .models import Thread
 
 from .html import dump_thread
-from .html_colors import get_random_color
 
 
 def check_backup(backup_dir):
@@ -207,7 +206,7 @@ def process_backup(backup_dir, output_dir):
     db = db_conn.cursor()
 
     # Get and index all contact and group names
-    addressbook: Addressbook = make_addressbook(db, db_version)
+    addressbook = make_addressbook(db, db_version)
 
     # Start by getting the Threads from the database
     query = db.execute("SELECT _id, recipient_ids FROM thread")

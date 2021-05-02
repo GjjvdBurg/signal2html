@@ -5,9 +5,6 @@ License: See LICENSE file.
 """
 
 import logging
-import sqlite3
-
-from enum import Enum
 
 from .html_colors import get_random_color
 from .models import Recipient
