@@ -22,7 +22,6 @@ from .models import Attachment
 from .models import MMSMessageRecord
 from .models import Quote
 from .models import Recipient
-from .models import RecipientId
 from .models import SMSMessageRecord
 from .models import Thread
 
@@ -149,18 +148,6 @@ def get_mms_records(
         quote = None
         if quote_id:
             quote_auth = addressbook.get_recipient_by_address(quote_author)
-            if quote_auth is None:
-                # Quote is from someone who isn't a recipient (e.g. a friend
-                # quotes a third person in a group). We'll just create a
-                # recipient object for this person.
-                rid = RecipientId(quote_author)
-                quote_auth = Recipient(
-                    rid,
-                    quote_author,
-                    color=None,
-                    isgroup=False,
-                    phone=str(quote_author),
-                )
             quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
 
         mms_auth = addressbook.get_recipient_by_address(address)
