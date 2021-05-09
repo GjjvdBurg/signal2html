@@ -8,8 +8,8 @@ Copyright: 2020, G.J.J. van den Burg
 
 """
 
+import logging
 import os
-import warnings
 import sqlite3
 import shutil
 
@@ -27,6 +27,8 @@ from .models import Thread
 
 from .html import dump_thread
 
+logger = logging.getLogger(__name__)
+
 
 def check_backup(backup_dir):
     """Check that we have the necessary files"""
@@ -41,9 +43,7 @@ def check_backup(backup_dir):
     # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
     if not version in ["18", "23", "65", "80", "89"]:
-        warnings.warn(
-            f"Warning: Found untested Signal database version: {version}."
-        )
+        logger.warn(f"Found untested Signal database version: {version}.")
     return version
 
 
@@ -87,8 +87,8 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     fname = f"Attachment_{_id}_{unique_id}.bin"
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
-        warnings.warn(
-            f"Warning: couldn't find attachment {source}. Maybe it was deleted?"
+        logger.warn(
+            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded."
         )
         return None
 
