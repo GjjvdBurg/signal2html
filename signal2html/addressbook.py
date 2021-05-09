@@ -9,6 +9,7 @@ import logging
 
 from .html_colors import get_random_color
 from .models import Recipient
+from .versioninfo import VersionInfo
 
 
 class Addressbook(metaclass=abc.ABCMeta):
@@ -19,11 +20,10 @@ class Addressbook(metaclass=abc.ABCMeta):
     - `_load_recipients()` to load all recipients
     - `get_recipient_by_address()` to return a specific recipient"""
 
-    def __init__(self, db, version):
+    def __init__(self, db):
         """Initializes the addressbook and load all known recipients."""
         self.logger = logging.getLogger(__name__)
         self.db = db
-        self.version = int(version)
         self.rid_to_recipient: dict[str, Recipient] = {}
         self.phone_to_rid: dict[str, str] = {}
         self.groups: dict[int, str] = {}
@@ -268,10 +268,10 @@ class AddressbookV2(Addressbook):
             self._add_recipient(recipient_id, name, color, isgroup, phone)
 
 
-def make_addressbook(db, version) -> Addressbook:
+def make_addressbook(db, versioninfo) -> Addressbook:
     """Factory function for Addressbook.
 
-    The returned implementation depends on the version of the Signal database."""
-    if int(version) <= 23:
-        return AddressbookV1(db, version)
-    return AddressbookV2(db, version)
+    The returned implementation depends on the structure of the Signal database."""
+    if versioninfo.is_addressbook_using_rids():
+        return AddressbookV2(db)
+    return AddressbookV1(db)

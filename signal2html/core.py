@@ -27,11 +27,13 @@ from .models import Thread
 
 from .html import dump_thread
 
+from .versioninfo import VersionInfo
+
 logger = logging.getLogger(__name__)
 
 
-def check_backup(backup_dir):
-    """Check that we have the necessary files"""
+def check_backup(backup_dir) -> VersionInfo:
+    """Check that we have the necessary files and return VersionInfo"""
     if not os.path.join(backup_dir, "database.sqlite"):
         raise DatabaseNotFound
     if not os.path.join(backup_dir, "DatabaseVersion.sbf"):
@@ -39,12 +41,12 @@ def check_backup(backup_dir):
     with open(os.path.join(backup_dir, "DatabaseVersion.sbf"), "r") as fp:
         version_str = fp.read()
 
-    # We have only ever seen database version 23, so we don't proceed if it's
-    # not that. Testing and pull requests welcome.
     version = version_str.split(":")[-1].strip()
-    if not version in ["18", "23", "65", "80", "89"]:
+    versioninfo = VersionInfo(version)
+
+    if not versioninfo.is_tested_version():
         logger.warn(f"Found untested Signal database version: {version}.")
-    return version
+    return versioninfo
 
 
 def get_color(db, recipient_id):
@@ -57,7 +59,7 @@ def get_color(db, recipient_id):
     return color
 
 
-def get_sms_records(db, thread, addressbook, version=None):
+def get_sms_records(db, thread, addressbook, versioninfo=None):
     """ Collect all the SMS records for a given thread """
     sms_records = []
     sms_qry = db.execute(
@@ -124,7 +126,7 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
 
 
 def get_mms_records(
-    db, thread, addressbook, backup_dir, thread_dir, version=None
+    db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
     """ Collect all MMS records for a given thread """
     mms_records = []
@@ -172,12 +174,19 @@ def get_mms_records(
 
 
 def populate_thread(
-    db, thread, addressbook, backup_dir, thread_dir, version=None
+    db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
     """ Populate a thread with all corresponding messages """
-    sms_records = get_sms_records(db, thread, addressbook, version=version)
+    sms_records = get_sms_records(
+        db, thread, addressbook, versioninfo=versioninfo
+    )
     mms_records = get_mms_records(
-        db, thread, addressbook, backup_dir, thread_dir, version=version
+        db,
+        thread,
+        addressbook,
+        backup_dir,
+        thread_dir,
+        versioninfo=versioninfo,
     )
     thread.sms = sms_records
     thread.mms = mms_records
@@ -187,13 +196,13 @@ def process_backup(backup_dir, output_dir):
     """ Main functionality to convert database into HTML """
 
     # Verify backup and open database
-    db_version = check_backup(backup_dir)
+    versioninfo = check_backup(backup_dir)
     db_file = os.path.join(backup_dir, "database.sqlite")
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
 
     # Get and index all contact and group names
-    addressbook = make_addressbook(db, db_version)
+    addressbook = make_addressbook(db, versioninfo)
 
     # Start by getting the Threads from the database
     query = db.execute("SELECT _id, recipient_ids FROM thread")
@@ -208,7 +217,7 @@ def process_backup(backup_dir, output_dir):
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = os.path.join(output_dir, t.sanename)
         populate_thread(
-            db, t, addressbook, backup_dir, thread_dir, version=db_version
+            db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
         )
         dump_thread(t, thread_dir)
 
