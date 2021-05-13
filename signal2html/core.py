@@ -59,7 +59,7 @@ def get_color(db, recipient_id):
     return color
 
 
-def get_sms_records(db, thread, addressbook, versioninfo=None):
+def get_sms_records(db, thread, addressbook):
     """ Collect all the SMS records for a given thread """
     sms_records = []
     sms_qry = db.execute(
@@ -177,9 +177,7 @@ def populate_thread(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
     """ Populate a thread with all corresponding messages """
-    sms_records = get_sms_records(
-        db, thread, addressbook, versioninfo=versioninfo
-    )
+    sms_records = get_sms_records(db, thread, addressbook)
     mms_records = get_mms_records(
         db,
         thread,
