@@ -169,9 +169,11 @@
         width: 200px;
         background-color: #505050;
         color: white;
-        font-weight: bold;
         text-align: center;
         padding: 5px 0;
+        border-color: white;
+        border-width: 1px;
+        border-style: solid;
         border-radius: 3px;
         margin-left: -100px;
         bottom: 125%;
@@ -190,7 +192,7 @@
         margin-left: -5px;
         border-width: 5px;
         border-style: solid;
-        border-color: #505050 transparent transparent transparent;
+        border-color: white transparent transparent transparent;
       }
 
       .msg-reaction:hover .msg-reaction-info {
@@ -314,7 +316,7 @@
          {% if msg.reactions %}
          <div class="msg-reactions">
           {% for reaction in msg.reactions %}
-          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}<span style="color: {{reaction.color}};" class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span></span>
+          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}</span><span class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span>
           {% endfor %}
          </div>
          {% endif %}
