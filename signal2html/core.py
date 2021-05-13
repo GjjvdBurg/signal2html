@@ -22,6 +22,7 @@ from .exceptions import DatabaseVersionNotFound
 
 from .models import Attachment
 from .models import MMSMessageRecord
+from .models import Mention
 from .models import Quote
 from .models import Reaction
 from .models import Recipient
@@ -224,6 +225,37 @@ def get_mms_quote(addressbook, quote_id, quote_author, quote_body):
     return quote
 
 
+def get_mentions(db, addressbook, thread_id, versioninfo):
+    mentions = {}
+
+    if versioninfo.are_mentions_supported:
+        query = db.execute(
+            "SELECT _id, message_id, recipient_id, range_start, range_length "
+            "FROM mention WHERE thread_id=?",
+            (thread_id,),
+        )
+        mentions_data = query.fetchall()
+
+        for (
+            _id,
+            message_id,
+            recipient_id,
+            range_start,
+            range_length,
+        ) in mentions_data:
+            name = addressbook.get_recipient_by_address(str(recipient_id)).name
+            mention = Mention(
+                mention_id=_id,
+                name=name,
+                length=range_length,
+            )
+            if not message_id in mentions.keys():
+                mentions[message_id] = {}
+            mentions[message_id][range_start] = mention
+
+    return mentions
+
+
 def populate_thread(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
@@ -239,6 +271,8 @@ def populate_thread(
     )
     thread.sms = sms_records
     thread.mms = mms_records
+
+    thread.mentions = get_mentions(db, addressbook, thread._id, versioninfo)
 
 
 def process_backup(backup_dir, output_dir):

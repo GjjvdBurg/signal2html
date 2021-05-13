@@ -30,3 +30,8 @@ class VersionInfo(object):
         """Returns a SQL expression to retrieve reactions to MMS messages."""
 
         return "reactions" if self.version >= 37 else "''"
+
+    def are_mentions_supported(self) -> bool:
+        """Returns whether the mentions table is present."""
+
+        return self.version >= 68
