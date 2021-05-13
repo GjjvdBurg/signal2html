@@ -67,4 +67,5 @@ maintaining this same level of privacy (for instance by only storing the
 plaintext messages on encypted volumes/drives).
 
 Originally written by [Gertjan van den Burg](https://gertjan.dev). See the 
-[CONTRIBUTORS](./CONTRIBUTORS.md) file for a full list of contributors.
+[contributors](https://github.com/GjjvdBurg/signal2html/graphs/contributors) 
+file for a full list of all contributors.
