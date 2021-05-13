@@ -132,36 +132,38 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
 
 def get_mms_reactions(encoded_reactions, addressbook, mid):
     reactions = []
-    try:
-        if encoded_reactions:
+    if encoded_reactions:
+        try:
             structured_reactions = StructuredReactions.loads(encoded_reactions)
-            for structured_reaction in structured_reactions.reactions:
-                rid = addressbook.get_recipient_by_address(
-                    str(structured_reaction.who)
-                )
-                reaction = Reaction(
-                    rid=rid,
-                    what=structured_reaction.what,
-                    time_sent=dt.datetime.fromtimestamp(
-                        structured_reaction.time_sent // 1000
-                    ),
-                    time_received=dt.datetime.fromtimestamp(
-                        structured_reaction.time_received // 1000
-                    ),
-                )
-                reaction.time_sent = reaction.time_sent.replace(
-                    microsecond=(structured_reaction.time_sent % 1000) * 1000
-                )
-                reaction.time_received = reaction.time_received.replace(
-                    microsecond=(structured_reaction.time_received % 1000)
-                    * 1000
-                )
-                reactions.append(reaction)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load reactions for message {mid}: {str(e)}"
+            )
+            return []
 
-        return reactions
-    except Exception as e:
-        logger.warn(f"Failed to load reactions for message {mid}: {str(e)}")
-        return []
+        for structured_reaction in structured_reactions.reactions:
+            rid = addressbook.get_recipient_by_address(
+                str(structured_reaction.who)
+            )
+            reaction = Reaction(
+                rid=rid,
+                what=structured_reaction.what,
+                time_sent=dt.datetime.fromtimestamp(
+                    structured_reaction.time_sent // 1000
+                ),
+                time_received=dt.datetime.fromtimestamp(
+                    structured_reaction.time_received // 1000
+                ),
+            )
+            reaction.time_sent = reaction.time_sent.replace(
+                microsecond=(structured_reaction.time_sent % 1000) * 1000
+            )
+            reaction.time_received = reaction.time_received.replace(
+                microsecond=(structured_reaction.time_received % 1000) * 1000
+            )
+            reactions.append(reaction)
+
+    return reactions
 
 
 def get_mms_records(
