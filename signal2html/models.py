@@ -69,7 +69,7 @@ class MessageRecord(DisplayRecord):
 
 @dataclass
 class Reaction:
-    rid: Recipient
+    recipient: Recipient
     what: str
     time_sent: datetime
     time_received: datetime

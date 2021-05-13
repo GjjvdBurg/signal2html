@@ -198,8 +198,8 @@ def dump_thread(thread, output_dir):
             for r in msg.reactions:
                 out["reactions"].append(
                     {
-                        "name": r.rid.name,
-                        "color": COLORMAP[r.rid.color],
+                        "recipient_id": r.recipient.rid,
+                        "name": r.recipient.name,
                         "what": r.what,
                         "time_sent": r.time_sent,
                         "time_received": r.time_received,

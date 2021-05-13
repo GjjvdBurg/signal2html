@@ -142,11 +142,11 @@ def get_mms_reactions(encoded_reactions, addressbook, mid):
             return []
 
         for structured_reaction in structured_reactions.reactions:
-            rid = addressbook.get_recipient_by_address(
+            recipient = addressbook.get_recipient_by_address(
                 str(structured_reaction.who)
             )
             reaction = Reaction(
-                rid=rid,
+                recipient=recipient,
                 what=structured_reaction.what,
                 time_sent=dt.datetime.fromtimestamp(
                     structured_reaction.time_sent // 1000
