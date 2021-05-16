@@ -22,12 +22,11 @@ class VersionInfo(object):
         """Returns whether the contacts are structured using recipient IDs.
 
         Previous versions referred to contacts using their phone numbers or a
-        special group ID. Current knowledge: change happened strictly after
-        version 23 and at the latest at version 65."""
+        special group ID."""
 
-        return self.version > 23
+        return self.version >= 24
 
     def get_reactions_query_column(self) -> str:
         """Returns a SQL expression to retrieve reactions to MMS messages."""
 
-        return "reactions" if self.version >= 89 else "''"
+        return "reactions" if self.version >= 37 else "''"
