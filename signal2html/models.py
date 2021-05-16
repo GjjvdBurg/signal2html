@@ -18,17 +18,21 @@ from unicodedata import normalize
 
 
 @dataclass
-class RecipientId:
-    _id: str  # phone number (?)
+class Recipient:
+    rid: int
+    name: str
+    color: str
+    isgroup: bool
+    phone: str
 
     def __hash__(self):
-        return hash(self._id)
+        return hash(self.rid)
 
 
 @dataclass
 class Quote:
     _id: int
-    author: RecipientId
+    author: Recipient
     text: str
 
 
@@ -41,18 +45,6 @@ class Attachment:
     height: int
     quote: bool
     unique_id: str
-
-
-@dataclass
-class Recipient:
-    rid: int
-    name: str
-    color: str
-    isgroup: bool
-    phone: str
-
-    def __hash__(self):
-        return hash(self.rid)
 
 
 @dataclass
