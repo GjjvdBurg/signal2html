@@ -1,3 +1,5 @@
+# -*- coding: utf-8 -*-
+
 """Addressbook functionality
 
 License: See LICENSE file.

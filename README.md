@@ -66,7 +66,6 @@ exporting and decrypting your messages, you should take responsibility for
 maintaining this same level of privacy (for instance by only storing the 
 plaintext messages on encypted volumes/drives).
 
-Author: [Gertjan van den Burg](https://gertjan.dev), with the help of some 
-kind [contributors](https://github.com/GjjvdBurg/signal2html/graphs/contributors).
-
-[![BuyMeACoffee](https://img.shields.io/badge/%E2%98%95-buymeacoffee-ffdd00)](https://www.buymeacoffee.com/GjjvdBurg)
+Originally written by [Gertjan van den Burg](https://gertjan.dev). See the 
+[contributors](https://github.com/GjjvdBurg/signal2html/graphs/contributors) 
+file for a full list of all contributors.

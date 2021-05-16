@@ -2,9 +2,7 @@
 
 """Colors extracted from Signal source
 
-Author: G.J.J. van den Burg
 License: See LICENSE file.
-Copyright: 2020, G.J.J. van den Burg
 
 """
 

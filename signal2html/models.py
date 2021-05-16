@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # -*- coding: utf-8 -*-
 
 """
@@ -7,9 +6,7 @@ Models for storing Signal backup objects.
 These are heavily inspired by the database models of the Signal Android app, 
 but only the necessary fields are kept.
 
-Author: G.J.J. van den Burg
 License: See LICENSE file.
-Copyright: 2020, G.J.J. van den Burg
 
 """
 
