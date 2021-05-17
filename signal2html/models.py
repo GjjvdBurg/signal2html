@@ -15,6 +15,7 @@ from dataclasses import dataclass, field
 from typing import List
 from re import sub
 from unicodedata import normalize
+from datetime import datetime
 
 
 @dataclass
@@ -64,9 +65,18 @@ class MessageRecord(DisplayRecord):
 
 
 @dataclass
+class Reaction:
+    recipient: Recipient
+    what: str
+    time_sent: datetime
+    time_received: datetime
+
+
+@dataclass
 class MMSMessageRecord(MessageRecord):
     quote: Quote
     attachments: List[Attachment]
+    reactions: List[Reaction]
 
 
 @dataclass

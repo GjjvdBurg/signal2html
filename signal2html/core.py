@@ -10,6 +10,10 @@ import logging
 import os
 import sqlite3
 import shutil
+import datetime as dt
+
+from .dbproto import StructuredReaction
+from .dbproto import StructuredReactions
 
 from .addressbook import make_addressbook
 
@@ -19,6 +23,7 @@ from .exceptions import DatabaseVersionNotFound
 from .models import Attachment
 from .models import MMSMessageRecord
 from .models import Quote
+from .models import Reaction
 from .models import Recipient
 from .models import SMSMessageRecord
 from .models import Thread
@@ -123,14 +128,53 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
         mms.attachments.append(a)
 
 
+def get_mms_reactions(encoded_reactions, addressbook, mid):
+    reactions = []
+    if encoded_reactions:
+        try:
+            structured_reactions = StructuredReactions.loads(encoded_reactions)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load reactions for message {mid}: {str(e)}"
+            )
+            return []
+
+        for structured_reaction in structured_reactions.reactions:
+            recipient = addressbook.get_recipient_by_address(
+                str(structured_reaction.who)
+            )
+            reaction = Reaction(
+                recipient=recipient,
+                what=structured_reaction.what,
+                time_sent=dt.datetime.fromtimestamp(
+                    structured_reaction.time_sent // 1000
+                ),
+                time_received=dt.datetime.fromtimestamp(
+                    structured_reaction.time_received // 1000
+                ),
+            )
+            reaction.time_sent = reaction.time_sent.replace(
+                microsecond=(structured_reaction.time_sent % 1000) * 1000
+            )
+            reaction.time_received = reaction.time_received.replace(
+                microsecond=(structured_reaction.time_received % 1000) * 1000
+            )
+            reactions.append(reaction)
+
+    return reactions
+
+
 def get_mms_records(
-    db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
+    db, thread, addressbook, backup_dir, thread_dir, versioninfo
 ):
     """ Collect all MMS records for a given thread """
     mms_records = []
+
+    reaction_expr = versioninfo.get_reactions_query_column()
+
     qry = db.execute(
         "SELECT _id, address, date, date_received, body, quote_id, "
-        "quote_author, quote_body, msg_box FROM mms WHERE thread_id=?",
+        f"quote_author, quote_body, msg_box, {reaction_expr} FROM mms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = qry.fetchall()
@@ -144,11 +188,11 @@ def get_mms_records(
         quote_author,
         quote_body,
         msg_box,
+        reactions,
     ) in qry_res:
-        quote = None
-        if quote_id:
-            quote_auth = addressbook.get_recipient_by_address(quote_author)
-            quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
+        quote = get_mms_quote(addressbook, quote_id, quote_author, quote_body)
+
+        decoded_reactions = get_mms_reactions(reactions, addressbook, _id)
 
         mms_auth = addressbook.get_recipient_by_address(address)
         mms = MMSMessageRecord(
@@ -161,6 +205,7 @@ def get_mms_records(
             body=body,
             quote=quote,
             attachments=[],
+            reactions=decoded_reactions,
             _type=msg_box,
         )
         mms_records.append(mms)
@@ -169,6 +214,14 @@ def get_mms_records(
         add_mms_attachments(db, mms, backup_dir, thread_dir)
 
     return mms_records
+
+
+def get_mms_quote(addressbook, quote_id, quote_author, quote_body):
+    quote = None
+    if quote_id:
+        quote_auth = addressbook.get_recipient_by_address(quote_author)
+        quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
+    return quote
 
 
 def populate_thread(
@@ -182,7 +235,7 @@ def populate_thread(
         addressbook,
         backup_dir,
         thread_dir,
-        versioninfo=versioninfo,
+        versioninfo,
     )
     thread.sms = sms_records
     thread.mms = mms_records
@@ -208,7 +261,7 @@ def process_backup(backup_dir, output_dir):
     for (_id, recipient_id) in threads:
         recipient = addressbook.get_recipient_by_address(recipient_id)
         if recipient is None:
-            print(f"No recipient with address {recipient_id}")
+            logger.warn(f"No recipient with address {recipient_id}")
 
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = os.path.join(output_dir, t.sanename)
