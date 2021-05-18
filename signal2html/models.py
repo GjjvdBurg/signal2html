@@ -25,6 +25,7 @@ class Recipient:
     color: str
     isgroup: bool
     phone: str
+    uuid: str
 
     def __hash__(self):
         return hash(self.rid)

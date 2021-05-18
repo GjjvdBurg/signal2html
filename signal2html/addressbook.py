@@ -28,6 +28,7 @@ class Addressbook(metaclass=abc.ABCMeta):
         self.db = db
         self.rid_to_recipient: dict[str, Recipient] = {}
         self.phone_to_rid: dict[str, str] = {}
+        self.uuid_to_rid: dict[str, str] = {}
         self.groups: dict[int, str] = {}
 
         self._load_groups()
@@ -59,10 +60,20 @@ class Addressbook(metaclass=abc.ABCMeta):
         rid = self.phone_to_rid.get(phone)
         return self.rid_to_recipient.get(rid)
 
-    def _add_recipient(self, recipient_id, name, color, isgroup, phone):
+    def get_recipient_by_uuid(self, uuid: str) -> Recipient:
+        """Returns a Recipient object that matches the UUID provided."""
+        rid = self.uuid_to_rid.get(uuid)
+        return self.rid_to_recipient.get(rid)
+
+    def _add_recipient(self, recipient_id, uuid, name, color, isgroup, phone):
         """Adds a recipient to the internal data structures."""
         recipient = Recipient(
-            recipient_id, name=name, color=color, isgroup=isgroup, phone=phone
+            recipient_id,
+            name=name,
+            color=color,
+            isgroup=isgroup,
+            phone=phone,
+            uuid=uuid,
         )
 
         self.rid_to_recipient[str(recipient_id)] = recipient
@@ -71,6 +82,8 @@ class Addressbook(metaclass=abc.ABCMeta):
         )
         if phone:
             self.phone_to_rid[str(phone)] = str(recipient_id)
+        if uuid:
+            self.uuid_to_rid[uuid] = str(recipient_id)
 
         return recipient
 
@@ -149,14 +162,14 @@ class AddressbookV1(Addressbook):
                         f"Group '{phone}' not in addressbook, adding it with new ID {newrid}."
                     )
                 return self._add_recipient(
-                    newrid, friendly_name, get_random_color(), True, phone
+                    newrid, "", friendly_name, get_random_color(), True, phone
                 )
             else:
                 self.logger.info(
                     f"Recipient with phone '{address}' not in addressbook, adding it."
                 )
                 return self._add_recipient(
-                    newrid, address, get_random_color(), False, phone
+                    newrid, "", address, get_random_color(), False, phone
                 )
         else:
             return recipient
@@ -200,7 +213,7 @@ class AddressbookV1(Addressbook):
             if color is None:
                 color = get_random_color()
 
-            self._add_recipient(recipient_id, name, color, isgroup, phone)
+            self._add_recipient(recipient_id, "", name, color, isgroup, phone)
 
 
 class AddressbookV2(Addressbook):
@@ -230,7 +243,7 @@ class AddressbookV2(Addressbook):
         In this version of the database, all recipients references should be
         found in this table."""
         qry = self.db.execute(
-            "SELECT _id, group_id, "
+            "SELECT _id, group_id, uuid, "
             "phone, "
             "system_display_name, "
             "profile_joined_name, "
@@ -241,6 +254,7 @@ class AddressbookV2(Addressbook):
         for (
             recipient_id,
             group_id,
+            uuid,
             phone,
             system_display_name,
             profile_joined_name,
@@ -267,7 +281,9 @@ class AddressbookV2(Addressbook):
             if color is None:
                 color = get_random_color()
 
-            self._add_recipient(recipient_id, name, color, isgroup, phone)
+            self._add_recipient(
+                recipient_id, uuid, name, color, isgroup, phone
+            )
 
 
 def make_addressbook(db, versioninfo) -> Addressbook:
