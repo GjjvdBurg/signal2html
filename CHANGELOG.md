@@ -1,5 +1,10 @@
 # Changelog
 
+## Version 0.2.1
+
+* Improve version tests (thanks to @ericthegrey)
+* Add support for reactions (thanks to @ericthegrey)
+
 ## Version 0.2.0
 
 * Clean up code using an Addressbook class for recipients (thanks to 
