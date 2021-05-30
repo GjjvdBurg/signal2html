@@ -280,7 +280,7 @@ def get_mentions(db, addressbook, thread_id, versioninfo):
     """Retrieve all mentions in the DB for the requested thread into a dictionary."""
     mentions = {}
 
-    if versioninfo.are_mentions_supported:
+    if versioninfo.are_mentions_supported():
         query = db.execute(
             "SELECT _id, message_id, recipient_id, range_start, range_length "
             "FROM mention WHERE thread_id=?",
