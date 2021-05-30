@@ -57,7 +57,8 @@ def format_message(body, mentions={}):
             mention = mentions.get(i)
             if mention:
                 new_body += (
-                    "<span class='msg-mention'>@%s</span>" % mention.name
+                    "<span class='msg-mention'>@%s</span>"
+                    % format_message(mention.name)
                 )
                 skip = (
                     mention.length - 1
