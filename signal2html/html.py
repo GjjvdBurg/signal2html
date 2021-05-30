@@ -16,12 +16,17 @@ from jinja2 import select_autoescape
 
 from .html_colors import COLORMAP
 from .models import MMSMessageRecord
-from .types import get_named_message_type
-from .types import is_inbox_type
-from .types import is_incoming_call
-from .types import is_joined_type
-from .types import is_missed_call
-from .types import is_outgoing_call
+from .types import (
+    get_named_message_type,
+    is_inbox_type,
+    is_incoming_call,
+    is_joined_type,
+    is_missed_call,
+    is_outgoing_call,
+    is_group_call,
+    is_group_ctrl,
+    is_group_v2_data,
+)
 
 
 def is_all_emoji(body):
@@ -145,17 +150,26 @@ def dump_thread(thread, output_dir):
             }
             simple_messages.append(out)
 
-        # Handle calls
-        is_call = False
+        # Handle event messages (calls, group changes)
+        is_event = False
         if is_incoming_call(msg._type):
-            is_call = True
+            is_event = True
             msg.body = f"{thread.name} called you"
         elif is_outgoing_call(msg._type):
-            is_call = True
+            is_event = True
             msg.body = "You called"
         elif is_missed_call(msg._type):
-            is_call = True
+            is_event = True
             msg.body = "Missed call"
+        elif is_group_call(msg._type):
+            is_event = True
+            msg.body = "Group call"
+        elif is_group_ctrl(msg._type):
+            is_event = True
+            if is_group_v2_data(msg._type):
+                msg.body = "Group update (v2)"
+            else:
+                msg.body = "Group update (v1)"
 
         # Deal with quoted messages
         quote = {}
@@ -185,7 +199,7 @@ def dump_thread(thread, output_dir):
         out = {
             "isAllEmoji": all_emoji,
             "isGroup": is_group,
-            "isCall": is_call,
+            "isCall": is_event,
             "type": get_named_message_type(msg._type),
             "body": body,
             "date": date_sent,
