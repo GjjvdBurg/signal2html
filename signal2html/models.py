@@ -32,10 +32,18 @@ class Recipient:
 
 
 @dataclass
+class Mention:
+    mention_id: int
+    name: str
+    length: int
+
+
+@dataclass
 class Quote:
     _id: int
     author: Recipient
     text: str
+    mentions: Dict[int, Mention] = field(default_factory=lambda: {})
 
 
 @dataclass
@@ -63,13 +71,6 @@ class DisplayRecord(metaclass=ABCMeta):
 @dataclass
 class MessageRecord(DisplayRecord):
     _id: int
-
-
-@dataclass
-class Mention:
-    mention_id: int
-    name: str
-    length: int
 
 
 @dataclass

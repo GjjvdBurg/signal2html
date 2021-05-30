@@ -167,7 +167,7 @@ def dump_thread(thread, output_dir):
                 name = quote_author_name
             quote = {
                 "name": name,
-                "body": format_message(msg.quote.text),
+                "body": format_message(msg.quote.text, msg.quote.mentions),
                 "attachments": [],
             }
 

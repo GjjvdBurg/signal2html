@@ -35,3 +35,8 @@ class VersionInfo(object):
         """Returns whether the mentions table is present."""
 
         return self.version >= 68
+
+    def get_quote_mentions_query_column(self) -> str:
+        """Returns a SQL expression to retrieve quote mentions in MMS messages."""
+
+        return "quote_mentions" if self.are_mentions_supported() else "''"

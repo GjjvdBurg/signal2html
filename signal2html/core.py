@@ -12,6 +12,7 @@ import sqlite3
 import shutil
 import datetime as dt
 
+from .dbproto import StructuredMentions
 from .dbproto import StructuredReaction
 from .dbproto import StructuredReactions
 
@@ -129,7 +130,38 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
         mms.attachments.append(a)
 
 
+def get_mms_mentions(encoded_mentions, addressbook, mid):
+    """Decode mentions encoded in a SQL blob."""
+    mentions = {}
+    if encoded_mentions:
+        try:
+            structured_mentions = StructuredMentions.loads(encoded_mentions)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load quote mentions for message {mid}: {str(e)}"
+            )
+            return []
+
+        for structured_mention in structured_mentions.mentions:
+            recipient = addressbook.get_recipient_by_uuid(
+                structured_mention.who_uuid
+            )
+            name = recipient.name
+            mention = Mention(
+                mention_id=-1, name=name, length=structured_mention.length
+            )
+            range_start = (
+                0
+                if structured_mention.start is None
+                else structured_mention.start
+            )
+            mentions[range_start] = mention
+
+    return mentions
+
+
 def get_mms_reactions(encoded_reactions, addressbook, mid):
+    """Decode reactions encoded in a SQL blob."""
     reactions = []
     if encoded_reactions:
         try:
@@ -173,9 +205,11 @@ def get_mms_records(
 
     reaction_expr = versioninfo.get_reactions_query_column()
 
+    quote_mentions_expr = versioninfo.get_quote_mentions_query_column()
+
     qry = db.execute(
         "SELECT _id, address, date, date_received, body, quote_id, "
-        f"quote_author, quote_body, msg_box, {reaction_expr} FROM mms WHERE thread_id=?",
+        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr} FROM mms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = qry.fetchall()
@@ -188,10 +222,18 @@ def get_mms_records(
         quote_id,
         quote_author,
         quote_body,
+        quote_mentions,
         msg_box,
         reactions,
     ) in qry_res:
-        quote = get_mms_quote(addressbook, quote_id, quote_author, quote_body)
+        quote = get_mms_quote(
+            addressbook,
+            quote_id,
+            quote_author,
+            quote_body,
+            quote_mentions,
+            _id,
+        )
 
         decoded_reactions = get_mms_reactions(reactions, addressbook, _id)
 
@@ -217,15 +259,25 @@ def get_mms_records(
     return mms_records
 
 
-def get_mms_quote(addressbook, quote_id, quote_author, quote_body):
+def get_mms_quote(
+    addressbook, quote_id, quote_author, quote_body, quote_mentions, mid
+):
+    """Retrieve quote (replied message) from a MMS message."""
     quote = None
     if quote_id:
         quote_auth = addressbook.get_recipient_by_address(quote_author)
-        quote = Quote(_id=quote_id, author=quote_auth, text=quote_body)
+        decoded_mentions = get_mms_mentions(quote_mentions, addressbook, mid)
+        quote = Quote(
+            _id=quote_id,
+            author=quote_auth,
+            text=quote_body,
+            mentions=decoded_mentions,
+        )
     return quote
 
 
 def get_mentions(db, addressbook, thread_id, versioninfo):
+    """Retrieve all mentions in the DB for the requested thread into a dictionary."""
     mentions = {}
 
     if versioninfo.are_mentions_supported:
