@@ -77,6 +77,7 @@ def get_sms_records(db, thread, addressbook):
         sms_auth = addressbook.get_recipient_by_address(address)
         sms = SMSMessageRecord(
             _id=_id,
+            data=None,
             addressRecipient=sms_auth,
             recipient=thread.recipient,
             dateSent=date_sent,
@@ -240,6 +241,7 @@ def get_mms_records(
         mms_auth = addressbook.get_recipient_by_address(address)
         mms = MMSMessageRecord(
             _id=_id,
+            data=None,
             addressRecipient=mms_auth,
             recipient=thread.recipient,
             dateSent=date,
