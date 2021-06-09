@@ -11,7 +11,15 @@ import os
 import sqlite3
 import shutil
 import datetime as dt
+import base64
+import binascii
+import uuid
 
+
+from .dbproto import StructuredMemberRole
+from .dbproto import StructuredGroupCall
+from .dbproto import StructuredGroupDataV1
+from .dbproto import StructuredGroupDataV2
 from .dbproto import StructuredMentions
 from .dbproto import StructuredReaction
 from .dbproto import StructuredReactions
@@ -22,8 +30,11 @@ from .exceptions import DatabaseNotFound
 from .exceptions import DatabaseVersionNotFound
 
 from .models import Attachment
-from .models import MMSMessageRecord
+from .models import GroupCallData
+from .models import GroupUpdateData
+from .models import MemberInfo
 from .models import Mention
+from .models import MMSMessageRecord
 from .models import Quote
 from .models import Reaction
 from .models import Recipient
@@ -31,6 +42,12 @@ from .models import SMSMessageRecord
 from .models import Thread
 
 from .html import dump_thread
+
+from .types import (
+    is_group_call,
+    is_group_ctrl,
+    is_group_v2_data,
+)
 
 from .versioninfo import VersionInfo
 
@@ -74,10 +91,12 @@ def get_sms_records(db, thread, addressbook):
     )
     qry_res = sms_qry.fetchall()
     for _id, address, date, date_sent, body, _type in qry_res:
+
+        data = get_data_from_body(_type, body, addressbook, _id)
         sms_auth = addressbook.get_recipient_by_address(address)
         sms = SMSMessageRecord(
             _id=_id,
-            data=None,
+            data=data,
             addressRecipient=sms_auth,
             recipient=thread.recipient,
             dateSent=date_sent,
@@ -129,6 +148,232 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
             quote=quote,
         )
         mms.attachments.append(a)
+
+
+def decode_body(body):
+    try:
+        return base64.b64decode(body)
+    except (TypeError, ValueError, binascii.Error) as e:
+        logger.warn(f"Failed to decode body for message {mid}: {str(e)}")
+        return None
+
+
+def get_group_call_data(rawbody, addressbook, mid):
+    if rawbody:
+        try:
+            structured_call = StructuredGroupCall.loads(rawbody)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load group call data for message {mid}: {str(e)}"
+            )
+            return []
+
+        timestamp = dt.datetime.fromtimestamp(structured_call.when // 1000)
+        timestamp = timestamp.replace(
+            microsecond=(structured_call.when % 1000) * 1000
+        )
+        recipient = addressbook.get_recipient_by_uuid(structured_call.by)
+        if recipient:
+            initiator = recipient.name
+
+        group_call_data = GroupCallData(
+            initiator=initiator,
+            timestamp=timestamp,
+        )
+
+        return group_call_data
+    else:
+        return None
+
+
+def get_group_update_data_v1(rawbody, addressbook, mid):
+    """Get the data for a Group V1 update.
+
+    There are two lists of members:
+    - One list by structures with telephone numbers and/or UUIDs
+    - Another list by telephone numbers
+
+    Some groups use the first (sometimes without filling the UUID field),
+    some use the second, and some both.
+
+    Merge both lists and indicate for each member if they were found by phone
+    or by UUID (preferable)."""
+
+    if rawbody:
+        try:
+            structured_group_data = StructuredGroupDataV1.loads(rawbody)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load group update data (v1) for message {mid}: {str(e)}"
+            )
+            return []
+
+        members = dict()
+        for member in structured_group_data.members:
+            name = None
+            match_from_phone = False
+            if member.uuid:
+                name = addressbook.get_recipient_by_uuid(member.uuid).name
+            elif member.phone:
+                name = addressbook.get_recipient_by_phone(member.phone).name
+                match_from_phone = True
+
+            member_info = MemberInfo(
+                name=name,
+                phone=member.phone,
+                match_from_phone=match_from_phone,
+                admin=False,
+            )
+            members[member.phone] = member_info
+
+        for phone_member in structured_group_data.phone_members:
+            if not members.get(phone_member):
+                name = addressbook.get_recipient_by_phone(phone_member).name
+                member_info = MemberInfo(
+                    name=name,
+                    phone=phone_member,
+                    match_from_phone=True,
+                    admin=False,
+                )
+                members[phone_member] = member_info
+
+        members_list = list()
+        for key, value in members.items():
+            members_list.append(value)
+
+        group_update_data = GroupUpdateData(
+            group_name=structured_group_data.group_name,
+            change_by=None,
+            members=members_list,
+        )
+        return group_update_data
+    else:
+        return None
+
+
+def get_member_by_raw_uuid(raw_uuid: bytes, what: str, addressbook, mid: str):
+    """Find a recipient from a binary UUID. Output their name from the
+    addressbook or the textual UUID if not found."""
+
+    try:
+        text_uuid = str(uuid.UUID(bytes=raw_uuid))
+    except ValueError as e:
+        logger.warn(f"Failed to parse {what} UUID for message {mid}: {str(e)}")
+        return None
+
+    recipient = addressbook.get_recipient_by_uuid(text_uuid)
+    member_name = recipient.name if recipient else text_uuid
+    return member_name
+
+
+def get_group_update_data_v2(rawbody, addressbook, mid):
+    """Get the data for a Group V2 update.
+
+    Group V2 updates use UUIDs exclusively to identify members. The update
+    messages contain the old state, the new state, and a description of the
+    changes. Parse the change description to print out:
+    - The person who made the change (editor)
+    - A new group name
+    - Added (new) members
+    - Deleted members
+
+    Also parse the new state to print out the resulting list of members."""
+
+    if rawbody:
+        try:
+            structured_group_data = StructuredGroupDataV2.loads(rawbody)
+        except (ValueError, IndexError, TypeError) as e:
+            logger.warn(
+                f"Failed to load group update data (v2) for message {mid}: {str(e)}"
+            )
+            return []
+
+        change = structured_group_data.change
+        deleted_members = []
+        new_members = []
+        members = []
+        change_by = None
+        editor = None
+        if change.by:
+            editor = get_member_by_raw_uuid(
+                change.by, "update editor", addressbook, mid
+            )
+            if editor:
+                change_by = MemberInfo(
+                    name=editor,
+                    phone=None,
+                    match_from_phone=False,
+                    admin=False,
+                )
+
+        for member in change.new_members:
+            name = (
+                get_member_by_raw_uuid(
+                    member.uuid, "new member", addressbook, mid
+                )
+                or "Unknown"
+            )
+            admin = member.role == StructuredMemberRole.MEMBER_ROLE_ADMIN
+            new_members.append(
+                MemberInfo(
+                    name=name, phone=None, match_from_phone=False, admin=admin
+                )
+            )
+
+        for member in change.deleted_members:
+            name = (
+                get_member_by_raw_uuid(
+                    member, "deleted member", addressbook, mid
+                )
+                or "Unknown"
+            )
+            deleted_members.append(
+                MemberInfo(
+                    name=name, phone=None, match_from_phone=False, admin=False
+                )
+            )
+
+        state = structured_group_data.state
+        for member in state.members:
+            name = (
+                get_member_by_raw_uuid(member.uuid, "member", addressbook, mid)
+                or "Unknown"
+            )
+            admin = member.role == StructuredMemberRole.MEMBER_ROLE_ADMIN
+            members.append(
+                MemberInfo(
+                    name=name, phone=None, match_from_phone=False, admin=admin
+                )
+            )
+
+        group_update_data = GroupUpdateData(
+            group_name=change.new_title.value if change.new_title else None,
+            change_by=change_by,
+            members=members,
+            new_members=new_members,
+            deleted_members=deleted_members,
+        )
+        return group_update_data
+
+    return None
+
+
+def get_data_from_body(_type, body, addressbook, mid):
+    """Decode data in the message body and provide a structured representation."""
+    data = None
+    if is_group_call(_type):
+        data = get_group_call_data(decode_body(body), addressbook, mid)
+    elif is_group_ctrl(_type):
+        if is_group_v2_data(_type):
+            data = get_group_update_data_v2(
+                decode_body(body), addressbook, mid
+            )
+        else:
+            data = get_group_update_data_v1(
+                decode_body(body), addressbook, mid
+            )
+
+    return data
 
 
 def get_mms_mentions(encoded_mentions, addressbook, mid):
@@ -238,10 +483,11 @@ def get_mms_records(
 
         decoded_reactions = get_mms_reactions(reactions, addressbook, _id)
 
+        data = get_data_from_body(msg_box, body, addressbook, _id)
         mms_auth = addressbook.get_recipient_by_address(address)
         mms = MMSMessageRecord(
             _id=_id,
-            data=None,
+            data=data,
             addressRecipient=mms_auth,
             recipient=thread.recipient,
             dateSent=date,
