@@ -120,4 +120,5 @@ class Thread:
         clean = normalize("NFKC", text.strip())
         clean = clean.lstrip(".#")
         clean = sub("[^]\\w!@#$%^&'`.=+{}~()[-]", "_", clean)
+        clean = clean.rstrip("_")
         return clean

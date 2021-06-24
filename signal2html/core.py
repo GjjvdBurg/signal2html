@@ -265,6 +265,10 @@ def process_backup(backup_dir, output_dir):
 
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = os.path.join(output_dir, t.sanename)
+        i = 2
+        while os.path.exists(thread_dir):
+            thread_dir = os.path.join(output_dir, t.sanename + f"_{i}")
+            i += 1
         populate_thread(
             db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
         )
