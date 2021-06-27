@@ -10,6 +10,8 @@ License: See LICENSE file.
 
 """
 
+import os
+
 from abc import ABCMeta
 from dataclasses import dataclass, field
 from typing import List
@@ -126,3 +128,26 @@ class Thread:
         clean = sub("[^]\\w!@#$%^&'`.=+{}~()[-]", "_", clean)
         clean = clean.rstrip("_")
         return clean
+
+    def get_thread_dir(self, output_dir: str, make_dir=True) -> str:
+        return os.path.dirname(self.get_path(output_dir, make_dir=make_dir))
+
+    def get_path(self, output_dir: str, make_dir=True) -> str:
+        """Return a path for a thread and try to be clever about merging
+        contacts. Optionally create the contact directory."""
+        dirname = self.sanename
+        # Use phone number to distinguish threads from the same contact,
+        # except for groups, which do not have a phone number.
+        filename = f"{self.sanename if self.is_group else self.sanephone}.html"
+        path = os.path.join(output_dir, dirname, filename)
+        i = 2
+        while os.path.exists(path):
+            if self.is_group:
+                dirname = f"{self.sanename}_{i}"
+            else:
+                filename = f"{self.sanephone}_{i}.html"
+            path = os.path.join(output_dir, dirname, filename)
+            i += 1
+        if make_dir:
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+        return path
