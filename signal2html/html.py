@@ -72,12 +72,10 @@ def dump_thread(thread, output_dir):
     )
     template = env.get_template("thread.html")
 
-    is_group = thread.recipient.isgroup
-
     # Create the message color CSS (depends on individuals)
     group_color_css = ""
     msg_css = ".msg-sender-%i { /* recipient id: %5s */ background: %s;}\n"
-    if is_group:
+    if thread.is_group:
         group_recipients = set(m.addressRecipient for m in messages)
         sender_idx = {r: k for k, r in enumerate(group_recipients)}
         colors_used = []
@@ -172,7 +170,7 @@ def dump_thread(thread, output_dir):
         aR = msg.addressRecipient
         out = {
             "isAllEmoji": all_emoji,
-            "isGroup": is_group,
+            "isGroup": thread.is_group,
             "isCall": is_call,
             "type": get_named_message_type(msg._type),
             "body": body,
@@ -180,7 +178,7 @@ def dump_thread(thread, output_dir):
             "attachments": [],
             "id": msg._id,
             "name": aR.name,
-            "sender_idx": sender_idx[aR] if is_group else "0",
+            "sender_idx": sender_idx[aR] if thread.is_group else "0",
             "quote": quote,
             "reactions": [],
         }

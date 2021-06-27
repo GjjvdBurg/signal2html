@@ -92,6 +92,10 @@ class Thread:
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
 
     @property
+    def is_group(self) -> bool:
+        return self.recipient.isgroup
+
+    @property
     def sanephone(self):
         """Return a sanitized phone number suitable for use as filename, and fallback on rid.
 
