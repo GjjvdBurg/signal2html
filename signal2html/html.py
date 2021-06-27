@@ -30,7 +30,7 @@ def is_all_emoji(body):
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
-def format_message(body, is_quote=False):
+def format_message(body, mentions={}):
     """Format message by processing all characters.
 
     - Wrap emoji in <span> for styling them
@@ -53,6 +53,18 @@ def format_message(body, is_quote=False):
             new_body += "&lt;"
         elif c == ">":
             new_body += "&gt;"
+        elif c == "\ufffc":  # Object replacement character
+            mention = mentions.get(i)
+            if mention:
+                new_body += (
+                    "<span class='msg-mention'>@%s</span>"
+                    % format_message(mention.name)
+                )
+                skip = (
+                    mention.length - 1
+                )  # Not clear in what case this is not 1
+            else:
+                new_body += c
         else:
             new_body += c
     return new_body
@@ -156,7 +168,7 @@ def dump_thread(thread, output_dir):
                 name = quote_author_name
             quote = {
                 "name": name,
-                "body": format_message(msg.quote.text),
+                "body": format_message(msg.quote.text, msg.quote.mentions),
                 "attachments": [],
             }
 
@@ -166,7 +178,7 @@ def dump_thread(thread, output_dir):
             all_emoji = not msg.quote and is_all_emoji(body)
         else:
             all_emoji = is_all_emoji(body)
-        body = format_message(body)
+        body = format_message(body, thread.mentions.get(msg._id))
 
         # Create message dictionary
         aR = msg.addressRecipient

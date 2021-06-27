@@ -5,11 +5,15 @@
 
 License: See LICENSE file.
 """
+import logging
+
+logger = logging.getLogger(__name__)
 
 
 class VersionInfo(object):
     def __init__(self, version):
         self.version = int(version)
+        logger.info(f"Using database version {version}.")
 
     def is_tested_version(self) -> bool:
         """Returns whether the database version has been tested.
@@ -30,3 +34,13 @@ class VersionInfo(object):
         """Returns a SQL expression to retrieve reactions to MMS messages."""
 
         return "reactions" if self.version >= 37 else "''"
+
+    def are_mentions_supported(self) -> bool:
+        """Returns whether the mentions table is present."""
+
+        return self.version >= 68
+
+    def get_quote_mentions_query_column(self) -> str:
+        """Returns a SQL expression to retrieve quote mentions in MMS messages."""
+
+        return "quote_mentions" if self.are_mentions_supported() else "''"

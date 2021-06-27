@@ -12,7 +12,7 @@ License: See LICENSE file.
 
 from abc import ABCMeta
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict
 from re import sub
 from unicodedata import normalize
 from datetime import datetime
@@ -25,9 +25,17 @@ class Recipient:
     color: str
     isgroup: bool
     phone: str
+    uuid: str
 
     def __hash__(self):
         return hash(self.rid)
+
+
+@dataclass
+class Mention:
+    mention_id: int
+    name: str
+    length: int
 
 
 @dataclass
@@ -35,6 +43,7 @@ class Quote:
     _id: int
     author: Recipient
     text: str
+    mentions: Dict[int, Mention] = field(default_factory=lambda: {})
 
 
 @dataclass
@@ -90,6 +99,7 @@ class Thread:
     recipient: Recipient
     mms: List[MMSMessageRecord] = field(default_factory=lambda: [])
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
+    mentions: Dict[int, Dict[int, Mention]] = field(default_factory=lambda: {})
 
     @property
     def sanephone(self):
