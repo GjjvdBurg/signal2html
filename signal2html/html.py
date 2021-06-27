@@ -6,7 +6,6 @@ License: See LICENSE file.
 
 """
 
-import os
 import datetime as dt
 
 from emoji import emoji_lis as emoji_list
@@ -16,6 +15,7 @@ from jinja2 import select_autoescape
 
 from .html_colors import COLORMAP
 from .models import MMSMessageRecord
+from .models import Thread
 from .types import get_named_message_type
 from .types import is_inbox_type
 from .types import is_incoming_call
@@ -70,7 +70,7 @@ def format_message(body, mentions={}):
     return new_body
 
 
-def dump_thread(thread, output_dir):
+def dump_thread(thread: Thread, output_dir: str):
     """Write a Thread instance to a HTML page in the output directory """
 
     # Combine and sort the messages
@@ -84,12 +84,10 @@ def dump_thread(thread, output_dir):
     )
     template = env.get_template("thread.html")
 
-    is_group = thread.recipient.isgroup
-
     # Create the message color CSS (depends on individuals)
     group_color_css = ""
     msg_css = ".msg-sender-%i { /* recipient id: %5s */ background: %s;}\n"
-    if is_group:
+    if thread.is_group:
         group_recipients = set(m.addressRecipient for m in messages)
         sender_idx = {r: k for k, r in enumerate(group_recipients)}
         colors_used = []
@@ -184,7 +182,7 @@ def dump_thread(thread, output_dir):
         aR = msg.addressRecipient
         out = {
             "isAllEmoji": all_emoji,
-            "isGroup": is_group,
+            "isGroup": thread.is_group,
             "isCall": is_call,
             "type": get_named_message_type(msg._type),
             "body": body,
@@ -192,7 +190,7 @@ def dump_thread(thread, output_dir):
             "attachments": [],
             "id": msg._id,
             "name": aR.name,
-            "sender_idx": sender_idx[aR] if is_group else "0",
+            "sender_idx": sender_idx[aR] if thread.is_group else "0",
             "quote": quote,
             "reactions": [],
         }
@@ -226,14 +224,6 @@ def dump_thread(thread, output_dir):
         messages=simple_messages,
         group_color_css=group_color_css,
     )
-
-    os.makedirs(output_dir, exist_ok=True)
-
-    # Use phone number to distinguish threads from the same contact,
-    # except for groups, which do not have a phone number.
-    filename = os.path.join(
-        output_dir,
-        f"{thread.sanename if is_group else thread.sanephone}.html",
-    )
-    with open(filename, "w", encoding="utf-8") as fp:
+    output_file = thread.get_path(output_dir)
+    with open(output_file, "w", encoding="utf-8") as fp:
         fp.write(html)
