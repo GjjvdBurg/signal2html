@@ -85,6 +85,10 @@
         font-size: xx-large;
       }
 
+      .msg-mention {
+        background-color: #00000060;
+      }
+
       .msg-date-change {
         font-size: x-small;
         opacity: 50%;
@@ -270,7 +274,7 @@
     <div class="message-box">
       {% for msg in messages %}
       {% if "date_msg" in msg %}
-      <div id="msg-{{ msg.id }}" class="msg msg-date-change">
+      <div class="msg msg-date-change">
          <p>
          {{ msg.body }}
          </p>
