@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.2.2
+
+* Add support for mentions (thanks to @ericthegrey)
+* Fixes for output filenames and directories
+* Minor cleanup
+
 ## Version 0.2.1
 
 * Improve version tests (thanks to @ericthegrey)
