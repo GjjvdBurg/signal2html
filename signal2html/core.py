@@ -597,10 +597,10 @@ def process_backup(backup_dir, output_dir):
             logger.warn(f"No recipient with address {recipient_id}")
 
         t = Thread(_id=_id, recipient=recipient)
-        thread_dir = os.path.join(output_dir, t.sanename)
+        thread_dir = t.get_thread_dir(output_dir, make_dir=False)
         populate_thread(
             db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
         )
-        dump_thread(t, thread_dir)
+        dump_thread(t, output_dir)
 
     db.close()
