@@ -60,6 +60,29 @@ class Attachment:
 
 
 @dataclass
+class GroupCallData:
+    initiator: str
+    timestamp: datetime
+
+
+@dataclass
+class MemberInfo:
+    name: str
+    phone: str
+    match_from_phone: bool
+    admin: bool
+
+
+@dataclass
+class GroupUpdateData:
+    group_name: str
+    change_by: MemberInfo
+    members: List[MemberInfo] = field(default_factory=list)
+    new_members: List[MemberInfo] = field(default_factory=list)
+    deleted_members: List[MemberInfo] = field(default_factory=list)
+
+
+@dataclass
 class DisplayRecord(metaclass=ABCMeta):
     addressRecipient: Recipient  # Recipient corresponding to address field
     recipient: Recipient
@@ -73,6 +96,7 @@ class DisplayRecord(metaclass=ABCMeta):
 @dataclass
 class MessageRecord(DisplayRecord):
     _id: int
+    data: any
 
 
 @dataclass

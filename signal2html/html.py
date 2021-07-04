@@ -6,22 +6,31 @@ License: See LICENSE file.
 
 """
 
+import logging
 import datetime as dt
 
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
+from types import SimpleNamespace as ns
 
 from .html_colors import COLORMAP
 from .models import MMSMessageRecord
 from .models import Thread
-from .types import get_named_message_type
-from .types import is_inbox_type
-from .types import is_incoming_call
-from .types import is_joined_type
-from .types import is_missed_call
-from .types import is_outgoing_call
+from .types import (
+    get_named_message_type,
+    is_inbox_type,
+    is_incoming_call,
+    is_joined_type,
+    is_missed_call,
+    is_outgoing_call,
+    is_group_call,
+    is_group_ctrl,
+    is_group_v2_data,
+)
+
+logger = logging.getLogger(__name__)
 
 
 def is_all_emoji(body):
@@ -36,6 +45,9 @@ def format_message(body, mentions={}):
     - Wrap emoji in <span> for styling them
     - Escape special HTML chars
     """
+    if body is None:
+        return None
+
     emoji_pos = emoji_list(body)
     new_body = ""
     emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
@@ -68,6 +80,61 @@ def format_message(body, mentions={}):
         else:
             new_body += c
     return new_body
+
+
+def format_member_list(header: str, member_list):
+    """Return a list of printable group members belonging to a category (e.g. new members)."""
+    people = ns()
+    people.header = header
+    people.members = list()
+    for member in member_list:
+        designation = ""
+        if not member.match_from_phone:
+            if member.phone:
+                designation = f"{format_message(member.name)} ({format_message(member.phone)})"
+            else:
+                designation = f"{format_message(member.name)}"
+        else:
+            if member.name is None or member.name == member.phone:
+                designation = f"{format_message(member.phone)}"
+            else:
+                designation = f"{format_message(member.phone)} ~ {format_message(member.name)}"
+
+        if member.admin:
+            designation += " (admin)"
+
+        people.members.append(designation)
+
+    return people
+
+
+def format_event_data_group_update(data):
+    """Return a structure describing a group update event."""
+    event_data = ns()
+    event_data.member_lists = list()
+
+    event_data.header = "Group update"
+    if data.change_by:
+        event_data.header += " by " + format_message(data.change_by.name)
+
+    if data.group_name:
+        event_data.name = data.group_name
+
+    if data.new_members and len(data.new_members) > 0:
+        member_list = format_member_list("New members:", data.new_members)
+        event_data.member_lists.append(member_list)
+
+    if data.deleted_members and len(data.deleted_members) > 0:
+        member_list = format_member_list(
+            "Deleted members:", data.deleted_members
+        )
+        event_data.member_lists.append(member_list)
+
+    if data.members and len(data.members) > 0:
+        member_list = format_member_list("Members:", data.members)
+        event_data.member_lists.append(member_list)
+
+    return event_data
 
 
 def dump_thread(thread: Thread, output_dir: str):
@@ -143,17 +210,28 @@ def dump_thread(thread: Thread, output_dir: str):
             }
             simple_messages.append(out)
 
-        # Handle calls
-        is_call = False
+        # Handle event messages (calls, group changes)
+        is_event = False
+        event_data = None
         if is_incoming_call(msg._type):
-            is_call = True
-            msg.body = f"{thread.name} called you"
+            is_event = True
+            event_data = format_message(thread.name)
         elif is_outgoing_call(msg._type):
-            is_call = True
-            msg.body = "You called"
+            is_event = True
         elif is_missed_call(msg._type):
-            is_call = True
-            msg.body = "Missed call"
+            is_event = True
+        elif is_group_call(msg._type):
+            is_event = True
+            if msg.data is not None:
+                if msg.data.initiator:
+                    event_data = format_message(msg.data.initiator)
+            else:
+                logger.warn(f"Group call for {msg._id} without data")
+        elif is_group_ctrl(msg._type):
+            is_event = True
+            event_data = format_event_data_group_update(
+                msg.data
+            )  # "Group update (v2)"
 
         # Deal with quoted messages
         quote = {}
@@ -176,16 +254,20 @@ def dump_thread(thread: Thread, output_dir: str):
             all_emoji = not msg.quote and is_all_emoji(body)
         else:
             all_emoji = is_all_emoji(body)
-        body = format_message(body, thread.mentions.get(msg._id))
+
+        # Skip HTML/mentions clean-up if this is an event (formatting included in event)
+        if not is_event:
+            body = format_message(body, thread.mentions.get(msg._id))
 
         # Create message dictionary
         aR = msg.addressRecipient
         out = {
             "isAllEmoji": all_emoji,
             "isGroup": thread.is_group,
-            "isCall": is_call,
+            "isCall": is_event,
             "type": get_named_message_type(msg._type),
             "body": body,
+            "event_data": event_data if is_event else None,
             "date": date_sent,
             "attachments": [],
             "id": msg._id,

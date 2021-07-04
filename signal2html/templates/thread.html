@@ -231,13 +231,27 @@
         max-height: 5em;
       }
 
-      .msg-call-incoming, .msg-call-outgoing, .msg-call-missed {
+      .msg-call-incoming, .msg-call-outgoing, .msg-call-missed, .msg-group-call {
         background: none;
         align-self: center;
       }
-      .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date {
+
+      .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date,
+      .msg-group-update-v1 .msg-date, .msg-group-update-v2 .msg-date, .msg-group-call .msg-date {
         display: block;
         text-align: center;
+      }
+
+      .msg-group-update-v1 {
+        background: none;
+        align-self: center;
+        max-width: 80%;
+      }
+
+      .msg-group-update-v2 {
+        background: none;
+        align-self: center;
+        max-width: 80%;
       }
 
       .msg-icon {
@@ -272,61 +286,107 @@
   </head>
   <body>
     <div class="message-box">
-      {% for msg in messages %}
-      {% if "date_msg" in msg %}
+{% for msg in messages %}
+  {% if "date_msg" in msg %}
       <div class="msg msg-date-change">
-         <p>
-         {{ msg.body }}
-         </p>
-      </div>
-      {% else %}
+        <p>
+          {{ msg.body }}
+        </p>
+  {% else %}
+    {% if msg.type == 'call-incoming' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          {{ msg.event_data | safe }} called you
+        </div>
+    {% elif msg.type == 'call-outgoing' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          You called
+        </div>
+    {% elif msg.type == 'call-missed' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          Missed call
+        </div>
+    {% elif msg.type == 'group-call' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div>
+          Group call {% if msg.event_data %}started by {{ msg.event_data | safe }}{% endif %}
+        </div>
+    {% elif msg.type == 'group-update-v1' or msg.type == 'group-update-v2' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div>
+      {% if msg.event_data.header %}<span>{{msg.event_data.header}}</span>{% endif %}
+          <ul>
+      {% if msg.event_data.name %}<li>Name: {{msg.event_data.name}}{% endif %}
+      {% for member_list in msg.event_data.member_lists %}
+            <li>{{member_list.header}}
+              <ul>
+        {% for member in member_list.members %}
+                <li>{{member | safe}}
+        {% endfor %}
+              </ul>
+      {% endfor %}
+          </ul>
+        </div>
+      {% if msg.attachments %}
+        {% for attach in msg.attachments %}
+        <div>Group photo</div>
+        {{ attachment(attach) }}
+        {% endfor %}
+      {% endif %}
+      {% if debug_messages %}
+        <code>{{msg.body}}</code>
+      {% endif %}
+    {% else %}
       <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }} msg-sender-{{ msg.sender_idx }}">
-         {% if msg.isGroup and msg.type == 'incoming' %}
-          <span class="msg-name">{{ msg.name }}</span>
-         {% endif %}
-         {% if msg.quote %}
-          <div class="msg-quote">
-            <div class="msg-quote-message">
-              <span class="msg-name">{{ msg.quote.name }}</span>
-              <pre>{{ msg.quote.body | safe }}</pre>
-            </div>
-            {% if msg.quote.attachments %}
-              <div class="msg-quote-attach">
-              {% for attach in msg.quote.attachments %}
-                {{ attachment(attach) }}
-              {% endfor %}
-              </div>
-            {% endif %}
+      {% if msg.isGroup and msg.type == 'incoming' %}
+        <span class="msg-name">{{ msg.name }}</span>
+      {% endif %}
+      {% if msg.quote %}
+        <div class="msg-quote">
+          <div class="msg-quote-message">
+            <span class="msg-name">{{ msg.quote.name }}</span>
+            <pre>{{ msg.quote.body | safe }}</pre>
           </div>
-         {% endif %}
-         {% if msg.attachments %}
-          {% for attach in msg.attachments %}
+        {% if msg.quote.attachments %}
+          <div class="msg-quote-attach">
+          {% for attach in msg.quote.attachments %}
             {{ attachment(attach) }}
           {% endfor %}
-         {% endif %}
-         {% if msg.isCall %}
-          <div class="msg-icon"></div>
-         {% endif %}
-         {% if msg.body %}
-          {% if msg.isAllEmoji %}
-            <div class="msg-all-emoji">
-          {% else %}
-            <div>
-          {% endif %}
-          <pre>{{ msg.body | safe }}</pre>
           </div>
-         {% endif %}
-         <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
-         {% if msg.reactions %}
-         <div class="msg-reactions">
-          {% for reaction in msg.reactions %}
-          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}</span><span class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span>
-          {% endfor %}
-         </div>
-         {% endif %}
-       </div>
+        {% endif %}
+        </div>
       {% endif %}
+      {% if msg.attachments %}
+        {% for attach in msg.attachments %}
+        {{ attachment(attach) }}
+        {% endfor %}
+      {% endif %}
+      {% if msg.body %}
+        {% if msg.isAllEmoji %}
+        <div class="msg-all-emoji">
+        {% else %}
+        <div>
+        {% endif %}
+          <pre>{{ msg.body | safe }}</pre>
+        </div>
+      {% endif %}
+    {% endif %}
+        <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
+    {% if msg.reactions %}
+        <div class="msg-reactions">
+      {% for reaction in msg.reactions %}
+          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}</span><span class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span>
       {% endfor %}
+        </div>
+    {% endif %}
+  {% endif %}
+      </div>
+{% endfor %}
     </div>
   </body>
 </html>
