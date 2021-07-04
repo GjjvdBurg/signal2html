@@ -10,14 +10,18 @@ License: See LICENSE file.
 
 BASE_TYPE_MASK = 0x1F
 
-INCOMING_CALL_TYPE = 1
-OUTGOING_CALL_TYPE = 2
-MISSED_CALL_TYPE = 3
+INCOMING_AUDIO_CALL_TYPE = 1
+OUTGOING_AUDIO_CALL_TYPE = 2
+MISSED_AUDIO_CALL_TYPE = 3
 JOINED_TYPE = 4
 UNSUPPORTED_MESSAGE_TYPE = 5
 INVALID_MESSAGE_TYPE = 6
-
+MISSED_VIDEO_CALL_TYPE = 8
+INCOMING_VIDEO_CALL_TYPE = 10
+OUTGOING_VIDEO_CALL_TYPE = 11
 GROUP_CALL_TYPE = 12
+
+KEY_UPDATE_TYPE_BIT = 0x200
 
 GROUP_CTRL_TYPE_BIT = 0x10000
 GROUP_V2_DATA_TYPE_BIT = 0x80000
@@ -53,19 +57,31 @@ def is_inbox_type(_type):
 
 
 def is_incoming_call(_type):
-    return _type == INCOMING_CALL_TYPE
+    return _type in (INCOMING_AUDIO_CALL_TYPE, INCOMING_VIDEO_CALL_TYPE)
 
 
 def is_outgoing_call(_type):
-    return _type == OUTGOING_CALL_TYPE
+    return _type in (OUTGOING_AUDIO_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE)
 
 
 def is_missed_call(_type):
-    return _type == MISSED_CALL_TYPE
+    return _type in (MISSED_AUDIO_CALL_TYPE, MISSED_VIDEO_CALL_TYPE)
+
+
+def is_video_call(_type):
+    return _type in (
+        INCOMING_VIDEO_CALL_TYPE,
+        OUTGOING_VIDEO_CALL_TYPE,
+        MISSED_VIDEO_CALL_TYPE,
+    )
 
 
 def is_group_call(_type):
     return _type == GROUP_CALL_TYPE
+
+
+def is_key_update(_type):
+    return _type & KEY_UPDATE_TYPE_BIT == KEY_UPDATE_TYPE_BIT
 
 
 def is_group_ctrl(_type):
@@ -86,16 +102,22 @@ def get_named_message_type(_type):
             return "group-update-v2"
         else:
             return "group-update-v1"
-    if is_outgoing_message_type(_type):
+    elif is_key_update(_type):
+        return "key-update"
+    elif is_outgoing_message_type(_type):
         return "outgoing"
     elif is_inbox_type(_type):
         return "incoming"
     elif is_incoming_call(_type):
-        return "call-incoming"
+        return (
+            "video-call-incoming" if is_video_call(_type) else "call-incoming"
+        )
     elif is_outgoing_call(_type):
-        return "call-outgoing"
+        return (
+            "video-call-outgoing" if is_video_call(_type) else "call-outgoing"
+        )
     elif is_missed_call(_type):
-        return "call-missed"
+        return "video-call-missed" if is_video_call(_type) else "call-missed"
     elif is_group_call(_type):
         return "group-call"
     elif is_joined_type(_type):

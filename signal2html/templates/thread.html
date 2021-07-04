@@ -231,26 +231,21 @@
         max-height: 5em;
       }
 
-      .msg-call-incoming, .msg-call-outgoing, .msg-call-missed, .msg-group-call {
+      .msg-call-incoming, .msg-call-outgoing, .msg-call-missed,
+      .msg-video-call-incoming, .msg-video-call-outgoing, .msg-video-call-missed,
+      .msg-key-update, .msg-group-update-v1, .msg-group-update-v2, .msg-group-call {
         background: none;
         align-self: center;
       }
 
       .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date,
-      .msg-group-update-v1 .msg-date, .msg-group-update-v2 .msg-date, .msg-group-call .msg-date {
+      .msg-video-call-incoming .msg-date, .msg-video-call-outgoing .msg-date, .msg-video-call-missed .msg-date,
+      .msg-key-update .msg-date, .msg-group-update-v1 .msg-date, .msg-group-update-v2 .msg-date, .msg-group-call .msg-date {
         display: block;
         text-align: center;
       }
 
-      .msg-group-update-v1 {
-        background: none;
-        align-self: center;
-        max-width: 80%;
-      }
-
-      .msg-group-update-v2 {
-        background: none;
-        align-self: center;
+      .msg-group-update-v1, .msg-group-update-v2 {
         max-width: 80%;
       }
 
@@ -311,10 +306,33 @@
         <div>
           Missed call
         </div>
+    {% elif msg.type == 'video-call-incming' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          Video call from {{ msg.event_data | safe }}
+        </div>
+    {% elif msg.type == 'video-call-outgoing' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          Outgoing video call
+        </div>
+    {% elif msg.type == 'video-call-missed' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div class="msg-icon"></div>
+        <div>
+          Missed video call
+        </div>
     {% elif msg.type == 'group-call' %}
       <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
         <div>
           Group call {% if msg.event_data %}started by {{ msg.event_data | safe }}{% endif %}
+        </div>
+    {% elif msg.type == 'key-update' %}
+      <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
+        <div>
+          {{msg.event_data | safe}} has a new safety number
         </div>
     {% elif msg.type == 'group-update-v1' or msg.type == 'group-update-v2' %}
       <div id="msg-{{ msg.id }}" class="msg msg-{{ msg.type }}">
