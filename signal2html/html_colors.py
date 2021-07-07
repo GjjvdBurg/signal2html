@@ -44,10 +44,10 @@ TAUPE_SHADE = "#6A4E54"
 STEEL = "#6B6B78"
 STEEL_TINT = "#BEBEC6"
 STEEL_SHADE = "#5A5A63"
-ULTRAMARINE = "@COLOR/CORE_ULTRAMARINE"
+ULTRAMARINE = "#2C6BED"
 ULTRAMARINE_TINT = "#B0C8F9"
 ULTRAMARINE_SHADE = "#1851B4"
-GROUP = "@COLOR/CORE_ULTRAMARINE"
+GROUP = "#2C6BED"
 GROUP_TINT = "#B0C8F9"
 GROUP_SHADE = "#1851B4"
 
@@ -74,6 +74,65 @@ COLORMAP = {
     "ultramarine": ULTRAMARINE,
     "group_color": GROUP,
 }
+
+# Extracted from:
+# https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/conversation/colors/AvatarColor.java
+# Note that Signal uses ColorInts, which are AARRGGBB. We strip off the alpha.
+AVATAR_COLORS = {
+    "C000": "#D00B0B",
+    "C010": "#C72A0A",
+    "C020": "#B34209",
+    "C030": "#9C5711",
+    "C040": "#866118",
+    "C050": "#76681E",
+    "C060": "#6C6C13",
+    "C070": "#5E6E0C",
+    "C080": "#507406",
+    "C090": "#3D7406",
+    "C100": "#2D7906",
+    "C110": "#1A7906",
+    "C120": "#067906",
+    "C130": "#067919",
+    "C140": "#06792D",
+    "C150": "#067940",
+    "C160": "#067953",
+    "C170": "#067462",
+    "C180": "#067474",
+    "C190": "#077288",
+    "C200": "#086DA0",
+    "C210": "#0A69C7",
+    "C220": "#0D59F2",
+    "C230": "#3454F4",
+    "C240": "#5151F6",
+    "C250": "#6447F5",
+    "C260": "#7A3DF5",
+    "C270": "#8F2AF4",
+    "C280": "#A20CED",
+    "C290": "#AF0BD0",
+    "C300": "#B80AB8",
+    "C310": "#C20AA3",
+    "C320": "#C70A88",
+    "C330": "#CB0B6B",
+    "C340": "#D00B4D",
+    "C350": "#D00B2C",
+    "crimson": "#CF163E",
+    "vermilion": "#C73F0A",
+    "burlap ": "#6F6A58",
+    "forest ": "#3B7845",
+    "wintergreen": "#1D8663",
+    "teal": "#077D92",
+    "blue": "#336BA3",
+    "indigo ": "#6058CA",
+    "violet ": "#9932CB",
+    "plum": "#AA377A",
+    "taupe": "#8F616A",
+    "steel": "#71717F",
+    "unknown": "#71717F",
+}
+
+
+def get_color(name):
+    return COLORMAP.get(name, None) or AVATAR_COLORS[name]
 
 
 def get_random_color():
