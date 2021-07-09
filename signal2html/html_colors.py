@@ -6,7 +6,10 @@ License: See LICENSE file.
 
 """
 
+import logging
 import random
+
+logger = logging.getLogger(__name__)
 
 CRIMSON = "#CC163D"
 CRIMSON_TINT = "#EDA6AE"
@@ -136,7 +139,11 @@ def list_colors():
 
 
 def get_color(name):
-    return COLORMAP.get(name, None) or AVATAR_COLORS[name]
+    color = COLORMAP.get(name, None) or AVATAR_COLORS.get(name, None)
+    if not color is None:
+        return color
+    logger.warn(f"Unknown color: {name}, using fallback color instead.")
+    return AVATAR_COLORS["unknown"]
 
 
 def get_random_color():
