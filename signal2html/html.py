@@ -15,7 +15,8 @@ from jinja2 import PackageLoader
 from jinja2 import select_autoescape
 from types import SimpleNamespace as ns
 
-from .html_colors import COLORMAP
+from .html_colors import get_color
+from .html_colors import list_colors
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import (
@@ -167,14 +168,14 @@ def dump_thread(thread: Thread, output_dir: str):
             ar_color = ar.color
             if ar_color in colors_used:
                 color = next(
-                    (c for c in COLORMAP if not c in group_colors),
+                    (c for c in list_colors() if not c in group_colors),
                     None,
                 )
                 ar_color = ar.color if color is None else color
             group_color_css += msg_css % (
                 idx,
                 ar.rid,
-                COLORMAP[ar_color],
+                get_color(ar_color),
             )
             colors_used.append(ar.color)
     else:
@@ -188,7 +189,7 @@ def dump_thread(thread: Thread, output_dir: str):
             group_color_css += msg_css % (
                 0,
                 firstInbox.addressRecipient.rid,
-                COLORMAP[clr],
+                get_color(clr),
             )
 
     # Create a simplified dict for each message
