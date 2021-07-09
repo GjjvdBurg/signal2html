@@ -131,6 +131,10 @@ AVATAR_COLORS = {
 }
 
 
+def list_colors():
+    return sorted(set(list(COLORMAP.keys()) + list(AVATAR_COLORS.keys())))
+
+
 def get_color(name):
     return COLORMAP.get(name, None) or AVATAR_COLORS[name]
 
