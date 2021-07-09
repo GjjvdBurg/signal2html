@@ -3,6 +3,11 @@
 
 """Class grouping version-specific information from the signal database.
 
+This file in the Signal source can be used to determine when features were 
+introduced:
+
+    https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/helpers/SQLCipherOpenHelper.java
+
 License: See LICENSE file.
 """
 import logging
