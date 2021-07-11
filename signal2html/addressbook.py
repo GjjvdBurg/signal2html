@@ -229,7 +229,9 @@ class AddressbookV2(Addressbook):
             self.logger.warn(
                 f"Recipient with rid {address} not in addressbook, adding it."
             )
-            return self._add_recipient(rid, "", get_random_color(), False, "")
+            return self._add_recipient(
+                rid, "", "", get_random_color(), False, ""
+            )
         else:
             return recipient
 
