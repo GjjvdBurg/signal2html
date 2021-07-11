@@ -26,10 +26,8 @@ from .types import (
     is_missed_call,
     is_outgoing_call,
     is_group_call,
-    is_video_call,
     is_key_update,
     is_group_ctrl,
-    is_group_v2_data,
 )
 
 logger = logging.getLogger(__name__)
