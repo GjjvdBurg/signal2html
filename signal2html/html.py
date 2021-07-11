@@ -27,8 +27,8 @@ from .types import (
     is_missed_call,
     is_outgoing_call,
     is_group_call,
+    is_key_update,
     is_group_ctrl,
-    is_group_v2_data,
 )
 
 logger = logging.getLogger(__name__)
@@ -228,6 +228,9 @@ def dump_thread(thread: Thread, output_dir: str):
                     event_data = format_message(msg.data.initiator)
             else:
                 logger.warn(f"Group call for {msg._id} without data")
+        elif is_key_update(msg._type):
+            is_event = True
+            event_data = format_message(msg.addressRecipient.name)
         elif is_group_ctrl(msg._type):
             is_event = True
             event_data = format_event_data_group_update(
