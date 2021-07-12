@@ -22,6 +22,27 @@
     {% endif %}
   </div>
 {%- endmacro %}
+{%- macro message_metadata(date, secure, state, isGroup, deliv_count, read_count) -%}
+  {{ date.strftime(date_time_format) }}
+  {% if not secure %}
+    &#x1f513;&#xfe0e;{# Open lock, text variant #}
+  {%endif%}
+  {% if state == "DISPLAY_TYPE_PENDING" %}
+    &#x25cc;{# Dotted circle #}
+  {% elif state == "DISPLAY_TYPE_SENT" %}
+    &#x2713;{# Checkmark #}
+  {% elif state == "DISPLAY_TYPE_FAILED" %}
+    &#x26a0;{# Warning sign #}
+  {% elif state == "DISPLAY_TYPE_DELIVERED" %}
+    &#x2713;&#x2713;{# Double checkmark #}{% if isGroup %}&nbsp;{{deliv_count}}{% endif %}
+  {% elif state == "DISPLAY_TYPE_READ" %}
+    {% if isGroup %}
+      &#x2713;&#x2713;&nbsp;{{deliv_count}}&nbsp;&#x2713;{{read_count}}{# Triple checkmark #}
+    {% else %}
+      NG&#x2713;&#x2713;&#x2713;{# Triple checkmark #}
+    {% endif %}
+  {% endif%}
+{%- endmacro -%}
 <!DOCTYPE html>
 <meta charset="utf-8">
 <html lang="en">
@@ -71,7 +92,7 @@
         margin-bottom: 5px;
       }
 
-      .msg-date {
+      .msg-data {
         font-size: x-small;
         opacity: 50%;
         display: block;
@@ -238,9 +259,9 @@
         align-self: center;
       }
 
-      .msg-call-incoming .msg-date, .msg-call-outgoing .msg-date, .msg-call-missed .msg-date,
-      .msg-video-call-incoming .msg-date, .msg-video-call-outgoing .msg-date, .msg-video-call-missed .msg-date,
-      .msg-key-update .msg-date, .msg-group-update-v1 .msg-date, .msg-group-update-v2 .msg-date, .msg-group-call .msg-date {
+      .msg-call-incoming .msg-data, .msg-call-outgoing .msg-data, .msg-call-missed .msg-data,
+      .msg-video-call-incoming .msg-data, .msg-video-call-outgoing .msg-data, .msg-video-call-missed .msg-data,
+      .msg-key-update .msg-data, .msg-group-update-v1 .msg-data, .msg-group-update-v2 .msg-data, .msg-group-call .msg-data {
         display: block;
         text-align: center;
       }
@@ -394,11 +415,11 @@
         </div>
       {% endif %}
     {% endif %}
-        <span class="msg-date">{{ msg.date.strftime('%b %d, %H:%M') }}</span>
+        <span class="msg-data">{{ message_metadata(msg.date, msg.secure, msg.send_state, msg.isGroup, msg.delivery_receipt_count, msg.read_receipt_count) }}</span>
     {% if msg.reactions %}
         <div class="msg-reactions">
       {% for reaction in msg.reactions %}
-          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}</span><span class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime('%b %d, %H:%M')}}<br>Received {{reaction.time_received.strftime('%b %d, %H:%M')}}</span></span>
+          <span class="msg-reaction"><span class="msg-emoji"><!-- From: {{reaction.recipient_id}} -->{{reaction.what}}</span><span class="msg-reaction-info">From {{reaction.name}} <br>Sent {{reaction.time_sent.strftime(date_time_format)}}<br>Received {{reaction.time_received.strftime(date_time_format)}}</span></span>
       {% endfor %}
         </div>
     {% endif %}

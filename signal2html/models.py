@@ -97,6 +97,8 @@ class DisplayRecord(metaclass=ABCMeta):
 class MessageRecord(DisplayRecord):
     _id: int
     data: any
+    delivery_receipt_count: int
+    read_receipt_count: int
 
 
 @dataclass
@@ -112,6 +114,7 @@ class MMSMessageRecord(MessageRecord):
     quote: Quote
     attachments: List[Attachment]
     reactions: List[Reaction]
+    viewed_receipt_count: int
 
 
 @dataclass

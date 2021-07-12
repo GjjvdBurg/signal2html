@@ -49,3 +49,8 @@ class VersionInfo(object):
         """Returns a SQL expression to retrieve quote mentions in MMS messages."""
 
         return "quote_mentions" if self.are_mentions_supported() else "''"
+
+    def get_viewed_receipt_count_column(self) -> str:
+        """Returns a SQL expression to retrieve the viewed receipt count of attachments of MMS messages."""
+
+        return "viewed_receipt_count" if self.version >= 83 else "'0'"
