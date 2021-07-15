@@ -1,5 +1,14 @@
 # Changelog
 
+## Version 0.2.3
+
+* Bugfix for non-existent recipients (thanks to @ericthegrey 
+  [#30](https://github.com/GjjvdBurg/signal2html/issues/30)).
+* Expand color palette to match Signal (thanks to @ChemoCosmo for reporting 
+  this (see [#30](https://github.com/GjjvdBurg/signal2html/issues/30)).
+* Support messages for video calls and key change (thanks to @ericthegrey 
+  [#29](https://github.com/GjjvdBurg/signal2html/pull/29)).
+
 ## Version 0.2.2
 
 * Add support for mentions (thanks to @ericthegrey)
