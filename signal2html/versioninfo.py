@@ -49,3 +49,9 @@ class VersionInfo(object):
         """Returns a SQL expression to retrieve quote mentions in MMS messages."""
 
         return "quote_mentions" if self.are_mentions_supported() else "''"
+
+    def get_thread_recipient_id_column(self) -> str:
+        """Returns SQL expression to retrieve recipient id from thread table"""
+        return (
+            "thread_recipient_id" if self.version >= 108 else "recipient_ids"
+        )
