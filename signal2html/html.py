@@ -267,6 +267,7 @@ def dump_thread(thread: Thread, output_dir: str):
         # Create message dictionary
         aR = msg.addressRecipient
         out = {
+            "date_msg": False,
             "isAllEmoji": all_emoji,
             "isGroup": thread.is_group,
             "isCall": is_event,
