@@ -11,6 +11,8 @@ import datetime as dt
 
 from typing import Any
 from typing import Dict
+from typing import List
+
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
@@ -149,6 +151,29 @@ def is_empty_message(msg: Dict[str, Any]) -> bool:
         or msg["isAllEmoji"]
         or msg["attachments"]
     )
+
+
+def filter_date_messages(
+    messages: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+
+    new_messages = []
+    if not messages:
+        return new_messages
+
+    if len(messages) == 1 and messages[0]["date_msg"]:
+        return new_messages
+
+    a, b = iter(messages), iter(messages)
+    next(b, None)
+    for m1, m2 in zip(a, b):
+        if m1["date_msg"] and m2["date_msg"]:
+            continue
+        new_messages.append(m1)
+
+    if not m2["date_msg"]:
+        new_messages.append(m2)
+    return new_messages
 
 
 def dump_thread(thread: Thread, output_dir: str):
@@ -320,6 +345,10 @@ def dump_thread(thread: Thread, output_dir: str):
             continue
 
         simple_messages.append(out)
+
+    # Filter out repeated date change messages with no actual messages in
+    # between
+    simple_messages = filter_date_messages(simple_messages)
 
     if not simple_messages:
         return
