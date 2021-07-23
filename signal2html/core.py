@@ -20,7 +20,6 @@ from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
 from .dbproto import StructuredGroupDataV2
 from .dbproto import StructuredMentions
-from .dbproto import StructuredReaction
 from .dbproto import StructuredReactions
 
 from .addressbook import make_addressbook
@@ -36,7 +35,6 @@ from .models import Mention
 from .models import MMSMessageRecord
 from .models import Quote
 from .models import Reaction
-from .models import Recipient
 from .models import SMSMessageRecord
 from .models import Thread
 

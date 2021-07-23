@@ -10,9 +10,9 @@ import abc
 import logging
 
 from typing import Union
+
 from .html_colors import get_random_color
 from .models import Recipient
-from .versioninfo import VersionInfo
 
 
 class Addressbook(metaclass=abc.ABCMeta):
