@@ -19,17 +19,16 @@ from .html_colors import get_color
 from .html_colors import list_colors
 from .models import MMSMessageRecord
 from .models import Thread
-from .types import (
-    get_named_message_type,
-    is_inbox_type,
-    is_incoming_call,
-    is_joined_type,
-    is_missed_call,
-    is_outgoing_call,
-    is_group_call,
-    is_key_update,
-    is_group_ctrl,
-)
+from .types import get_named_message_type
+from .types import is_group_call
+from .types import is_group_ctrl
+from .types import is_group_v1_migration_event
+from .types import is_inbox_type
+from .types import is_incoming_call
+from .types import is_joined_type
+from .types import is_key_update
+from .types import is_missed_call
+from .types import is_outgoing_call
 
 logger = logging.getLogger(__name__)
 
@@ -236,6 +235,8 @@ def dump_thread(thread: Thread, output_dir: str):
             event_data = format_event_data_group_update(
                 msg.data
             )  # "Group update (v2)"
+        elif is_group_v1_migration_event(msg._type):
+            continue
 
         # Deal with quoted messages
         quote = {}

@@ -17,6 +17,7 @@ JOINED_TYPE = 4
 UNSUPPORTED_MESSAGE_TYPE = 5
 INVALID_MESSAGE_TYPE = 6
 MISSED_VIDEO_CALL_TYPE = 8
+GV1_MIGRATION_TYPE = 9
 INCOMING_VIDEO_CALL_TYPE = 10
 OUTGOING_VIDEO_CALL_TYPE = 11
 GROUP_CALL_TYPE = 12
@@ -84,6 +85,10 @@ def is_key_update(_type):
     return _type & KEY_UPDATE_TYPE_BIT == KEY_UPDATE_TYPE_BIT
 
 
+def is_group_v1_migration_event(_type) -> bool:
+    return _type == GV1_MIGRATION_TYPE
+
+
 def is_group_ctrl(_type):
     return _type & GROUP_CTRL_TYPE_BIT == GROUP_CTRL_TYPE_BIT
 
@@ -102,6 +107,8 @@ def get_named_message_type(_type):
             return "group-update-v2"
         else:
             return "group-update-v1"
+    elif is_group_v1_migration_event(_type):
+        return "group-update-v1"
     elif is_key_update(_type):
         return "key-update"
     elif is_outgoing_message_type(_type):
