@@ -2,7 +2,10 @@
 
 """Utilities for dealing with message types
 
-These are extracted from the Signal Android app source code.
+These are extracted from the Signal Android app source code, specifically this 
+file:
+
+    https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/MmsSmsColumns.java
 
 License: See LICENSE file.
 
