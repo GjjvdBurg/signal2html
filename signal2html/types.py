@@ -24,8 +24,8 @@ GROUP_CALL_TYPE = 12
 
 KEY_UPDATE_TYPE_BIT = 0x200
 
-GROUP_CTRL_TYPE_BIT = 0x10000
-GROUP_V2_DATA_TYPE_BIT = 0x80000
+GROUP_UPDATE_BIT = 0x10000
+GROUP_V2_BIT = 0x80000
 
 BASE_INBOX_TYPE = 20
 BASE_OUTBOX_TYPE = 21
@@ -90,11 +90,11 @@ def is_group_v1_migration_event(_type) -> bool:
 
 
 def is_group_ctrl(_type):
-    return _type & GROUP_CTRL_TYPE_BIT == GROUP_CTRL_TYPE_BIT
+    return _type & GROUP_UPDATE_BIT == GROUP_UPDATE_BIT
 
 
 def is_group_v2_data(_type):
-    return _type & GROUP_V2_DATA_TYPE_BIT == GROUP_V2_DATA_TYPE_BIT
+    return _type & GROUP_V2_BIT == GROUP_V2_BIT
 
 
 def is_joined_type(_type):
