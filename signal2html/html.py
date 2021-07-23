@@ -9,6 +9,8 @@ License: See LICENSE file.
 import logging
 import datetime as dt
 
+from typing import Any
+from typing import Dict
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
@@ -135,6 +137,18 @@ def format_event_data_group_update(data):
         event_data.member_lists.append(member_list)
 
     return event_data
+
+
+def is_empty_message(msg: Dict[str, Any]) -> bool:
+    return not (
+        msg["body"]
+        or (not msg["event_data"] is None)
+        or msg["isCall"]
+        or msg["quote"]
+        or msg["reactions"]
+        or msg["isAllEmoji"]
+        or msg["attachments"]
+    )
 
 
 def dump_thread(thread: Thread, output_dir: str):
@@ -301,6 +315,9 @@ def dump_thread(thread: Thread, output_dir: str):
                         "time_received": r.time_received,
                     }
                 )
+
+        if is_empty_message(out):
+            continue
 
         simple_messages.append(out)
 
