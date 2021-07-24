@@ -15,7 +15,6 @@ import base64
 import binascii
 import uuid
 
-
 from .dbproto import StructuredMemberRole
 from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
@@ -449,7 +448,6 @@ def get_mms_records(
     mms_records = []
 
     reaction_expr = versioninfo.get_reactions_query_column()
-
     quote_mentions_expr = versioninfo.get_quote_mentions_query_column()
 
     qry = db.execute(
@@ -587,7 +585,9 @@ def process_backup(backup_dir, output_dir):
     addressbook = make_addressbook(db, versioninfo)
 
     # Start by getting the Threads from the database
-    query = db.execute("SELECT _id, recipient_ids FROM thread")
+    recipient_id_expr = versioninfo.get_thread_recipient_id_column()
+
+    query = db.execute(f"SELECT _id, {recipient_id_expr} FROM thread")
     threads = query.fetchall()
 
     # Combine the recipient objects and the thread info into Thread objects

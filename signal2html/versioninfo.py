@@ -25,7 +25,7 @@ class VersionInfo(object):
 
         Testing and pull requests welcome."""
 
-        return self.version in [18, 23, 65, 80, 89]
+        return self.version in [18, 23, 65, 80, 89, 110]
 
     def is_addressbook_using_rids(self) -> bool:
         """Returns whether the contacts are structured using recipient IDs.
@@ -49,3 +49,9 @@ class VersionInfo(object):
         """Returns a SQL expression to retrieve quote mentions in MMS messages."""
 
         return "quote_mentions" if self.are_mentions_supported() else "''"
+
+    def get_thread_recipient_id_column(self) -> str:
+        """Returns SQL expression to retrieve recipient id from thread table"""
+        return (
+            "thread_recipient_id" if self.version >= 108 else "recipient_ids"
+        )
