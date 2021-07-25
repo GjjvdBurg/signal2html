@@ -34,13 +34,9 @@
   {% elif state == "DISPLAY_TYPE_FAILED" %}
     &#x26a0;{# Warning sign #}
   {% elif state == "DISPLAY_TYPE_DELIVERED" %}
-    &#x2713;&#x2713;{# Double checkmark #}{% if isGroup %}&nbsp;{{deliv_count}}{% endif %}
+    &#x2713;&#x2713;{# Double checkmark #}
   {% elif state == "DISPLAY_TYPE_READ" %}
-    {% if isGroup %}
-      &#x2713;&#x2713;&nbsp;{{deliv_count}}&nbsp;&#x2713;{{read_count}}{# Triple checkmark #}
-    {% else %}
-      NG&#x2713;&#x2713;&#x2713;{# Triple checkmark #}
-    {% endif %}
+    &#x2713;&#x2713;&#x2713;{# Triple checkmark #}
   {% endif%}
 {%- endmacro -%}
 <!DOCTYPE html>
