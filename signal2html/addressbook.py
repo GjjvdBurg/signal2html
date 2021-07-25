@@ -9,6 +9,7 @@ License: See LICENSE file.
 import abc
 import logging
 
+from typing import Union
 from .html_colors import get_random_color
 from .models import Recipient
 from .versioninfo import VersionInfo
@@ -217,11 +218,11 @@ class AddressbookV1(Addressbook):
 
 
 class AddressbookV2(Addressbook):
-    def get_recipient_by_address(self, address: str) -> Recipient:
+    def get_recipient_by_address(self, address: Union[int, str]) -> Recipient:
         """In this database version, all addresses are recipient_id's and
         creating them here is not expected to happen."""
 
-        rid = address
+        rid = str(address)
         recipient = self.rid_to_recipient.get(rid)
 
         if recipient is None:
