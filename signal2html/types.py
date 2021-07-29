@@ -25,7 +25,7 @@ INCOMING_VIDEO_CALL_TYPE = 10
 OUTGOING_VIDEO_CALL_TYPE = 11
 GROUP_CALL_TYPE = 12
 
-KEY_UPDATE_TYPE_BIT = 0x200
+KEY_EXCHANGE_IDENTITY_UPDATE_BIT = 0x200
 
 GROUP_UPDATE_BIT = 0x10000
 GROUP_V2_BIT = 0x80000
@@ -84,8 +84,8 @@ def is_group_call(_type):
     return _type == GROUP_CALL_TYPE
 
 
-def is_key_update(_type):
-    return _type & KEY_UPDATE_TYPE_BIT == KEY_UPDATE_TYPE_BIT
+def is_identity_update(_type):
+    return (_type & KEY_EXCHANGE_IDENTITY_UPDATE_BIT) != 0
 
 
 def is_group_v1_migration_event(_type) -> bool:
@@ -112,7 +112,7 @@ def get_named_message_type(_type):
             return "group-update-v1"
     elif is_group_v1_migration_event(_type):
         return "group-update-v1"
-    elif is_key_update(_type):
+    elif is_identity_update(_type):
         return "key-update"
     elif is_outgoing_message_type(_type):
         return "outgoing"

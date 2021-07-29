@@ -30,7 +30,7 @@ from .types import is_group_v1_migration_event
 from .types import is_inbox_type
 from .types import is_incoming_call
 from .types import is_joined_type
-from .types import is_key_update
+from .types import is_identity_update
 from .types import is_missed_call
 from .types import is_outgoing_call
 
@@ -272,7 +272,7 @@ def dump_thread(thread: Thread, output_dir: str):
                     event_data = format_message(msg.data.initiator)
             else:
                 logger.warn(f"Group call for {msg._id} without data")
-        elif is_key_update(msg._type):
+        elif is_identity_update(msg._type):
             is_event = True
             event_data = format_message(msg.addressRecipient.name)
         elif is_group_ctrl(msg._type):
