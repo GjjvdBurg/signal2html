@@ -6,8 +6,9 @@ License: See LICENSE file.
 
 """
 
-import logging
 import datetime as dt
+import logging
+import re
 
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
@@ -80,6 +81,13 @@ def format_message(body, mentions={}):
                 new_body += c
         else:
             new_body += c
+
+    # Make URLs clickable
+    url_regex = "http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+"
+    for url in re.findall(url_regex, new_body):
+        new_body = new_body.replace(
+            url, f'<a href="{url}" target="_blank">{url}</a>', 1
+        )
     return new_body
 
 
