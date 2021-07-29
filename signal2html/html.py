@@ -156,7 +156,13 @@ def is_empty_message(msg: Dict[str, Any]) -> bool:
 def filter_date_messages(
     messages: List[Dict[str, Any]]
 ) -> List[Dict[str, Any]]:
+    """Filter consecutive date change messages
 
+    This function removes consecutive date change messages with nothing in
+    between. This can occur when empty messages are filtered out. Trailing date
+    change messages are also removed, as are threads that consist of a single
+    date change message.
+    """
     new_messages = []
     if not messages:
         return new_messages
