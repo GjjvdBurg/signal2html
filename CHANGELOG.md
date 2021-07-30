@@ -1,5 +1,11 @@
 # Changelog
 
+## Version 0.2.4
+
+* Bugfix for resolving recipient names for database version 108 and higher 
+  (thanks to @sbaum for reporting 
+  [#34](https://github.com/GjjvdBurg/signal2html/issues/34)).
+
 ## Version 0.2.3
 
 * Bugfix for non-existent recipients (thanks to @ericthegrey 
