@@ -578,7 +578,8 @@ def get_members(
             f"ON t.{thread_rid_column} = r._id "
             "LEFT JOIN groups g "
             "ON g.group_id = r.group_id "
-            f"WHERE t._id = {thread_id}"
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
         )
         query_result = query.fetchall()
         recipient_id, thread_members = query_result[0]
@@ -588,7 +589,8 @@ def get_members(
             "FROM thread t "
             "LEFT JOIN groups g "
             "ON t.recipient_ids = g.group_id "
-            f"WHERE t._id = {thread_id}"
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
         )
         query_result = query.fetchall()
         recipient_id, thread_members = query_result[0]
