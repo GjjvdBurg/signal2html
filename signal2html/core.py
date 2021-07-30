@@ -15,6 +15,8 @@ import base64
 import binascii
 import uuid
 
+from .database import Database
+
 from .dbproto import StructuredMemberRole
 from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
@@ -578,25 +580,27 @@ def process_backup(backup_dir, output_dir):
     # Verify backup and open database
     versioninfo = check_backup(backup_dir)
     db_file = os.path.join(backup_dir, "database.sqlite")
+
+    # NOTE: old style database cursor (to be removed)
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
+
+    # NOTE: new style database object
+    database = Database(db_file, versioninfo)
 
     # Get and index all contact and group names
     addressbook = make_addressbook(db, versioninfo)
 
     # Start by getting the Threads from the database
-    recipient_id_expr = versioninfo.get_thread_recipient_id_column()
-
-    query = db.execute(f"SELECT _id, {recipient_id_expr} FROM thread")
-    threads = query.fetchall()
+    thread_rows = database.get_threads()
 
     # Combine the recipient objects and the thread info into Thread objects
-    for (_id, recipient_id) in threads:
-        recipient = addressbook.get_recipient_by_address(recipient_id)
+    for row in thread_rows:
+        recipient = addressbook.get_recipient_by_address(row.recipient_id)
         if recipient is None:
-            logger.warn(f"No recipient with address {recipient_id}")
+            logger.warn(f"No recipient with address {row.recipient_id}")
 
-        t = Thread(_id=_id, recipient=recipient)
+        t = Thread(_id=row.thread_id, recipient=recipient)
         thread_dir = t.get_thread_dir(output_dir, make_dir=False)
         populate_thread(
             db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
