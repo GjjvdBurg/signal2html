@@ -11,7 +11,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        # Can add others is deemed necessary
+        # Can add others if deemed necessary
         os: [ 'ubuntu-latest' ]
         # minimal and latest
         py: [ '3.6', '3.9' ]
