@@ -34,9 +34,9 @@
   {% elif state == "DISPLAY_TYPE_FAILED" %}
     &#x26a0;{# Warning sign #}
   {% elif state == "DISPLAY_TYPE_DELIVERED" %}
-    &#x2713;&#x2713;{# Double checkmark #}
+    <span class="multiple-checkmarks">&#x2713;&#x2713;</span>{# Double checkmark #}
   {% elif state == "DISPLAY_TYPE_READ" %}
-    &#x2713;&#x2713;&#x2713;{# Triple checkmark #}
+    <span class="multiple-checkmarks">&#x2713;&#x2713;&#x2713;</span>{# Triple checkmark #}
   {% endif%}
 {%- endmacro -%}
 <!DOCTYPE html>
@@ -142,6 +142,12 @@
       audio {
         max-width: 100%;
         width: 400px;
+      }
+
+      .multiple-checkmarks {
+        letter-spacing: -0.3em;
+        margin-left: 3px;
+        margin-right: 3px;
       }
 
       .msg-img-container input[type=checkbox] {
