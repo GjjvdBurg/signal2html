@@ -305,8 +305,15 @@ def dump_thread(thread: Thread, output_dir: str):
     if not simple_messages:
         return
 
+    if thread.is_group:
+        count = len(thread.members)
+        subtitle = f"{count} member" if count == 1 else f"{count} members"
+    else:
+        subtitle = thread.sanephone
+
     html = template.render(
         thread_name=thread.name,
+        thread_subtitle=subtitle,
         messages=simple_messages,
         group_color_css=group_color_css,
     )

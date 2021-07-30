@@ -33,6 +33,18 @@
         background-color: #222;
       }
 
+      #message-header {
+        text-align: center;
+        color: white;
+        font-family: Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        padding-top: 30px;
+        padding-bottom: 30px;
+      }
+
+      #thread-title {
+        font-size: x-large;
+      }
+
       .message-box {
         display: flex;
         flex-direction: column;
@@ -41,6 +53,9 @@
         padding-left: 30px;
         padding-right: 30px;
         background-color: #282828;
+        color: white;
+        font-family: Noto Sans, Liberation Sans, OpenSans, sans-serif;
+        border-radius: 10px;
       }
 
       .msg-incoming {
@@ -56,8 +71,6 @@
       }
 
       .msg {
-        color: white;
-        font-family: Noto Sans, Liberation Sans, OpenSans, sans-serif;
         max-width: 50%;
         border-radius: .4em;
         margin: 15px 0;
@@ -203,7 +216,7 @@
         visibility: visible;
         opacity: 1;
       }
-          
+
       .msg-quote {
         display: flex;
         width: 98%;
@@ -280,6 +293,14 @@
     </style>
   </head>
   <body>
+    <div id="message-header">
+      <div id="thread-title">
+        {{ thread_name }}
+      </div>
+      <div id="thread-subtitle">
+        {{ thread_subtitle }}
+      </div>
+    </div>
     <div class="message-box">
 {% for msg in messages %}
   {% if "date_msg" in msg %}

@@ -126,6 +126,7 @@ class Thread:
     mms: List[MMSMessageRecord] = field(default_factory=lambda: [])
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
     mentions: Dict[int, Dict[int, Mention]] = field(default_factory=lambda: {})
+    members: List[Recipient] = field(default_factory=lambda: [])
 
     @property
     def is_group(self) -> bool:
