@@ -1,0 +1,29 @@
+name: build
+
+on:
+  push:
+  pull_request:
+
+
+jobs:
+  python:
+    name: Testing signal2html
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Can add others is deemed necessary
+        os: [ 'ubuntu-latest' ]
+        # minimal and latest
+        py: [ '3.6', '3.9' ]
+
+    steps:
+      - name: Install Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Test
+        run: make test_direct

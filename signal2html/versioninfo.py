@@ -9,7 +9,9 @@ introduced:
     https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/helpers/SQLCipherOpenHelper.java
 
 License: See LICENSE file.
+
 """
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,7 +44,6 @@ class VersionInfo(object):
 
     def are_mentions_supported(self) -> bool:
         """Returns whether the mentions table is present."""
-
         return self.version >= 68
 
     def get_quote_mentions_query_column(self) -> str:
