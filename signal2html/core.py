@@ -48,6 +48,8 @@ from .types import (
     is_group_v2_data,
 )
 
+from .__version__ import __version__
+
 from .versioninfo import VersionInfo
 
 logger = logging.getLogger(__name__)
@@ -84,18 +86,30 @@ def get_sms_records(db, thread, addressbook):
     """ Collect all the SMS records for a given thread """
     sms_records = []
     sms_qry = db.execute(
-        "SELECT _id, address, date, date_sent, body, type "
+        "SELECT _id, address, date, date_sent, body, type, "
+        "delivery_receipt_count, read_receipt_count "
         "FROM sms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = sms_qry.fetchall()
-    for _id, address, date, date_sent, body, _type in qry_res:
+    for (
+        _id,
+        address,
+        date,
+        date_sent,
+        body,
+        _type,
+        delivery_receipt_count,
+        read_receipt_count,
+    ) in qry_res:
 
         data = get_data_from_body(_type, body, addressbook, _id)
         sms_auth = addressbook.get_recipient_by_address(str(address))
         sms = SMSMessageRecord(
             _id=_id,
             data=data,
+            delivery_receipt_count=delivery_receipt_count,
+            read_receipt_count=read_receipt_count,
             addressRecipient=sms_auth,
             recipient=thread.recipient,
             dateSent=date_sent,
@@ -449,10 +463,13 @@ def get_mms_records(
 
     reaction_expr = versioninfo.get_reactions_query_column()
     quote_mentions_expr = versioninfo.get_quote_mentions_query_column()
+    viewed_receipt_count_expr = versioninfo.get_viewed_receipt_count_column()
 
     qry = db.execute(
         "SELECT _id, address, date, date_received, body, quote_id, "
-        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr} FROM mms WHERE thread_id=?",
+        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr}, "
+        f"delivery_receipt_count, read_receipt_count, {viewed_receipt_count_expr} "
+        "FROM mms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = qry.fetchall()
@@ -468,6 +485,9 @@ def get_mms_records(
         quote_mentions,
         msg_box,
         reactions,
+        delivery_receipt_count,
+        read_receipt_count,
+        viewed_receipt_count,
     ) in qry_res:
         quote = get_mms_quote(
             addressbook,
@@ -485,6 +505,8 @@ def get_mms_records(
         mms = MMSMessageRecord(
             _id=_id,
             data=data,
+            delivery_receipt_count=delivery_receipt_count,
+            read_receipt_count=read_receipt_count,
             addressRecipient=mms_auth,
             recipient=thread.recipient,
             dateSent=date,
@@ -495,6 +517,7 @@ def get_mms_records(
             attachments=[],
             reactions=decoded_reactions,
             _type=msg_box,
+            viewed_receipt_count=viewed_receipt_count,
         )
         mms_records.append(mms)
 
@@ -574,6 +597,8 @@ def populate_thread(
 
 def process_backup(backup_dir, output_dir):
     """ Main functionality to convert database into HTML """
+
+    logger.info(f"signal2html version {__version__}")
 
     # Verify backup and open database
     versioninfo = check_backup(backup_dir)
