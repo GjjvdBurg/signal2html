@@ -38,7 +38,7 @@ def linkify(message: str) -> str:
     idx = 0
     for match in matches:
         new_message += message[idx : match.index]
-        new_message += f'<a href={match.url}" target="_blank">{match.raw}</a>'
+        new_message += f'<a href="{match.url}" target="_blank">{match.raw}</a>'
         idx = match.last_index
     new_message += message[idx:]
 
