@@ -4,11 +4,6 @@
 
 License: See LICENSE file.
 
-Todo:
-
-    * Replace ``format_message`` with some sort of HTMLFormatter class that 
-    owns the Linkify() object so we don't have to make it a global.
-
 """
 
 import datetime as dt
@@ -22,7 +17,7 @@ from types import SimpleNamespace as ns
 
 from .html_colors import get_color
 from .html_colors import list_colors
-from .linkify import Linkify
+from .linkify import linkify
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import (
@@ -40,9 +35,6 @@ from .types import (
 )
 
 logger = logging.getLogger(__name__)
-
-# Make global for efficiency (see TODO above)
-LINKIFIER = Linkify()
 
 
 def is_all_emoji(body):
@@ -92,7 +84,7 @@ def format_message(body, mentions={}):
         else:
             new_body += c
 
-    new_body = LINKIFIER.linkify(new_body)
+    new_body = linkify(new_body)
     return new_body
 
 
