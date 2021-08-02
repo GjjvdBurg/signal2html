@@ -25,8 +25,16 @@ REQUIRED = [
     "linkify-it-py",
 ]
 
+docs_require = []
+test_require = []
+dev_require = ["green"]
+
 # What packages are optional?
-EXTRAS = {}
+EXTRAS = {
+    "docs": docs_require,
+    "tests": test_require,
+    "dev": docs_require + test_require + dev_require,
+}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------
