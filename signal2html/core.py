@@ -6,28 +6,27 @@ License: See LICENSE file.
 
 """
 
-import logging
-import os
-import sqlite3
-import shutil
-import datetime as dt
 import base64
 import binascii
+import datetime as dt
+import logging
+import os
+import shutil
+import sqlite3
 import uuid
 
-from .dbproto import StructuredMemberRole
+from .__version__ import __version__
+from .addressbook import make_addressbook
 from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
 from .dbproto import StructuredGroupDataV2
+from .dbproto import StructuredMemberRole
 from .dbproto import StructuredMentions
 from .dbproto import StructuredReaction
 from .dbproto import StructuredReactions
-
-from .addressbook import make_addressbook
-
 from .exceptions import DatabaseNotFound
 from .exceptions import DatabaseVersionNotFound
-
+from .html import dump_thread
 from .models import Attachment
 from .models import GroupCallData
 from .models import GroupUpdateData
@@ -39,17 +38,9 @@ from .models import Reaction
 from .models import Recipient
 from .models import SMSMessageRecord
 from .models import Thread
-
-from .html import dump_thread
-
-from .types import (
-    is_group_call,
-    is_group_ctrl,
-    is_group_v2_data,
-)
-
-from .__version__ import __version__
-
+from .types import is_group_call
+from .types import is_group_ctrl
+from .types import is_group_v2_data
 from .versioninfo import VersionInfo
 
 logger = logging.getLogger(__name__)

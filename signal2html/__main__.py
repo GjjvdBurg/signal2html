@@ -5,8 +5,8 @@
 License: See LICENSE file.
 """
 
-import sys
 import logging
+import sys
 
 
 def main():
