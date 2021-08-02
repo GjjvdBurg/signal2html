@@ -28,7 +28,7 @@ REQUIRED = [
 
 docs_require = []
 test_require = []
-dev_require = ["green"]
+dev_require = ["green", "black", "isort"]
 
 # What packages are optional?
 EXTRAS = {
