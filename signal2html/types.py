@@ -8,6 +8,8 @@ License: See LICENSE file.
 
 """
 
+from enum import Enum
+
 BASE_TYPE_MASK = 0x1F
 
 INCOMING_AUDIO_CALL_TYPE = 1
@@ -26,6 +28,8 @@ KEY_UPDATE_TYPE_BIT = 0x200
 GROUP_CTRL_TYPE_BIT = 0x10000
 GROUP_V2_DATA_TYPE_BIT = 0x80000
 
+SECURE_BIT = 0x800000
+
 BASE_INBOX_TYPE = 20
 BASE_OUTBOX_TYPE = 21
 BASE_SENDING_TYPE = 22
@@ -43,6 +47,46 @@ OUTGOING_MESSAGE_TYPES = [
     BASE_PENDING_SECURE_SMS_FALLBACK,
     BASE_PENDING_INSECURE_SMS_FALLBACK,
 ]
+
+
+class DisplayType(Enum):
+    DISPLAY_TYPE_NONE = 0
+    DISPLAY_TYPE_PENDING = 1
+    DISPLAY_TYPE_SENT = 2
+    DISPLAY_TYPE_FAILED = 3
+    DISPLAY_TYPE_DELIVERED = 4
+    DISPLAY_TYPE_READ = 5
+
+    @classmethod
+    def from_state(
+        cls, _type: int, is_delivered: bool = False, is_read: bool = False
+    ):
+        if not is_outgoing_message_type(_type):
+            return cls.DISPLAY_TYPE_NONE
+
+        if is_read:
+            return cls.DISPLAY_TYPE_READ
+
+        if is_delivered:
+            return cls.DISPLAY_TYPE_DELIVERED
+
+        base_type = _type & BASE_TYPE_MASK
+
+        if base_type == BASE_SENT_FAILED_TYPE:
+            return cls.DISPLAY_TYPE_FAILED
+
+        if base_type == BASE_SENT_TYPE:
+            return cls.DISPLAY_TYPE_SENT
+
+        if (
+            base_type == BASE_OUTBOX_TYPE
+            or base_type == BASE_SENDING_TYPE
+            or base_type == BASE_PENDING_SECURE_SMS_FALLBACK
+            or base_type == BASE_PENDING_INSECURE_SMS_FALLBACK
+        ):
+            return cls.DISPLAY_TYPE_PENDING
+
+        return cls.DISPLAY_TYPE_NONE
 
 
 def is_outgoing_message_type(_type):
@@ -82,6 +126,10 @@ def is_group_call(_type):
 
 def is_key_update(_type):
     return _type & KEY_UPDATE_TYPE_BIT == KEY_UPDATE_TYPE_BIT
+
+
+def is_secure(_type):
+    return _type & SECURE_BIT == SECURE_BIT
 
 
 def is_group_ctrl(_type):

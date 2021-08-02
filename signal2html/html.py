@@ -6,8 +6,8 @@ License: See LICENSE file.
 
 """
 
-import logging
 import datetime as dt
+import logging
 
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
@@ -17,9 +17,11 @@ from types import SimpleNamespace as ns
 
 from .html_colors import get_color
 from .html_colors import list_colors
+from .linkify import linkify
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import (
+    DisplayType,
     get_named_message_type,
     is_inbox_type,
     is_incoming_call,
@@ -28,6 +30,7 @@ from .types import (
     is_outgoing_call,
     is_group_call,
     is_key_update,
+    is_secure,
     is_group_ctrl,
 )
 
@@ -80,6 +83,8 @@ def format_message(body, mentions={}):
                 new_body += c
         else:
             new_body += c
+
+    new_body = linkify(new_body)
     return new_body
 
 
@@ -263,6 +268,17 @@ def dump_thread(thread: Thread, output_dir: str):
         if not is_event:
             body = format_message(body, thread.mentions.get(msg._id))
 
+        send_state = str(
+            DisplayType.from_state(
+                msg._type,
+                msg.delivery_receipt_count > 0,
+                msg.read_receipt_count > 0,
+            )
+        )
+        send_state = send_state[
+            send_state.index(".") + 1 :
+        ]  # A bit hackish, StrEnum would be better (Python 3.10)
+
         # Create message dictionary
         aR = msg.addressRecipient
         out = {
@@ -276,6 +292,10 @@ def dump_thread(thread: Thread, output_dir: str):
             "attachments": [],
             "id": msg._id,
             "name": aR.name,
+            "secure": is_secure(msg._type) or is_event,
+            "send_state": send_state,
+            "delivery_receipt_count": msg.delivery_receipt_count,
+            "read_receipt_count": msg.read_receipt_count,
             "sender_idx": sender_idx[aR] if thread.is_group else "0",
             "quote": quote,
             "reactions": [],
@@ -309,6 +329,7 @@ def dump_thread(thread: Thread, output_dir: str):
         thread_name=thread.name,
         messages=simple_messages,
         group_color_css=group_color_css,
+        date_time_format="%b %d, %H:%M",
     )
     output_file = thread.get_path(output_dir)
     with open(output_file, "w", encoding="utf-8") as fp:

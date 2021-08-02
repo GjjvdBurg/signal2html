@@ -22,6 +22,7 @@ REQUIRED = [
     "jinja2",
     'dataclasses;python_version=="3.6"',
     "pure-protobuf",
+    "linkify-it-py",
 ]
 
 docs_require = []
