@@ -6,8 +6,8 @@ License: See LICENSE file.
 
 """
 
-import logging
 import datetime as dt
+import logging
 
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
@@ -17,6 +17,7 @@ from types import SimpleNamespace as ns
 
 from .html_colors import get_color
 from .html_colors import list_colors
+from .linkify import linkify
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import (
@@ -82,6 +83,8 @@ def format_message(body, mentions={}):
                 new_body += c
         else:
             new_body += c
+
+    new_body = linkify(new_body)
     return new_body
 
 
