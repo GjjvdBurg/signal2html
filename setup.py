@@ -5,7 +5,8 @@
 import io
 import os
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 # Package meta-data.
 NAME = "signal2html"
@@ -27,7 +28,7 @@ REQUIRED = [
 
 docs_require = []
 test_require = []
-dev_require = ["green"]
+dev_require = ["green", "black", "isort"]
 
 # What packages are optional?
 EXTRAS = {
