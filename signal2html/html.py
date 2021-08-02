@@ -37,7 +37,7 @@ logger = logging.getLogger(__name__)
 
 
 def is_all_emoji(body):
-    """ Check if a message is non-empty and only contains emoji """
+    """Check if a message is non-empty and only contains emoji"""
     body = body.replace(" ", "").replace("\ufe0f", "")
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
@@ -143,7 +143,7 @@ def format_event_data_group_update(data):
 
 
 def dump_thread(thread: Thread, output_dir: str):
-    """Write a Thread instance to a HTML page in the output directory """
+    """Write a Thread instance to a HTML page in the output directory"""
 
     # Combine and sort the messages
     messages = thread.mms + thread.sms
