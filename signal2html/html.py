@@ -6,36 +6,38 @@ License: See LICENSE file.
 
 """
 
-import logging
 import datetime as dt
+import logging
+
+from types import SimpleNamespace as ns
 
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
-from types import SimpleNamespace as ns
 
 from .html_colors import get_color
 from .html_colors import list_colors
+from .linkify import linkify
 from .models import MMSMessageRecord
 from .models import Thread
-from .types import (
-    get_named_message_type,
-    is_inbox_type,
-    is_incoming_call,
-    is_joined_type,
-    is_missed_call,
-    is_outgoing_call,
-    is_group_call,
-    is_key_update,
-    is_group_ctrl,
-)
+from .types import DisplayType
+from .types import get_named_message_type
+from .types import is_group_call
+from .types import is_group_ctrl
+from .types import is_inbox_type
+from .types import is_incoming_call
+from .types import is_joined_type
+from .types import is_key_update
+from .types import is_missed_call
+from .types import is_outgoing_call
+from .types import is_secure
 
 logger = logging.getLogger(__name__)
 
 
 def is_all_emoji(body):
-    """ Check if a message is non-empty and only contains emoji """
+    """Check if a message is non-empty and only contains emoji"""
     body = body.replace(" ", "").replace("\ufe0f", "")
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
@@ -80,6 +82,8 @@ def format_message(body, mentions={}):
                 new_body += c
         else:
             new_body += c
+
+    new_body = linkify(new_body)
     return new_body
 
 
@@ -139,7 +143,7 @@ def format_event_data_group_update(data):
 
 
 def dump_thread(thread: Thread, output_dir: str):
-    """Write a Thread instance to a HTML page in the output directory """
+    """Write a Thread instance to a HTML page in the output directory"""
 
     # Combine and sort the messages
     messages = thread.mms + thread.sms
@@ -263,6 +267,17 @@ def dump_thread(thread: Thread, output_dir: str):
         if not is_event:
             body = format_message(body, thread.mentions.get(msg._id))
 
+        send_state = str(
+            DisplayType.from_state(
+                msg._type,
+                msg.delivery_receipt_count > 0,
+                msg.read_receipt_count > 0,
+            )
+        )
+        send_state = send_state[
+            send_state.index(".") + 1 :
+        ]  # A bit hackish, StrEnum would be better (Python 3.10)
+
         # Create message dictionary
         aR = msg.addressRecipient
         out = {
@@ -276,6 +291,10 @@ def dump_thread(thread: Thread, output_dir: str):
             "attachments": [],
             "id": msg._id,
             "name": aR.name,
+            "secure": is_secure(msg._type) or is_event,
+            "send_state": send_state,
+            "delivery_receipt_count": msg.delivery_receipt_count,
+            "read_receipt_count": msg.read_receipt_count,
             "sender_idx": sender_idx[aR] if thread.is_group else "0",
             "quote": quote,
             "reactions": [],
@@ -316,6 +335,7 @@ def dump_thread(thread: Thread, output_dir: str):
         thread_subtitle=subtitle,
         messages=simple_messages,
         group_color_css=group_color_css,
+        date_time_format="%b %d, %H:%M",
     )
     output_file = thread.get_path(output_dir)
     with open(output_file, "w", encoding="utf-8") as fp:

@@ -5,7 +5,8 @@
 import io
 import os
 
-from setuptools import find_packages, setup
+from setuptools import find_packages
+from setuptools import setup
 
 # Package meta-data.
 NAME = "signal2html"
@@ -22,10 +23,19 @@ REQUIRED = [
     "jinja2",
     'dataclasses;python_version=="3.6"',
     "pure-protobuf",
+    "linkify-it-py",
 ]
 
+docs_require = []
+test_require = []
+dev_require = ["green", "black", "isort"]
+
 # What packages are optional?
-EXTRAS = {}
+EXTRAS = {
+    "docs": docs_require,
+    "tests": test_require,
+    "dev": docs_require + test_require + dev_require,
+}
 
 # The rest you shouldn't have to touch too much :)
 # ------------------------------------------------

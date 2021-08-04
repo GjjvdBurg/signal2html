@@ -10,9 +10,15 @@ License: See LICENSE file.
 
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import List, Optional
-from pure_protobuf.dataclasses_ import field, message, optional_field
-from pure_protobuf.types import uint32, uint64
+
+from typing import List
+from typing import Optional
+
+from pure_protobuf.dataclasses_ import field
+from pure_protobuf.dataclasses_ import message
+from pure_protobuf.dataclasses_ import optional_field
+from pure_protobuf.types import uint32
+from pure_protobuf.types import uint64
 
 
 @message

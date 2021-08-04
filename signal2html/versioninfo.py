@@ -9,7 +9,9 @@ introduced:
     https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/helpers/SQLCipherOpenHelper.java
 
 License: See LICENSE file.
+
 """
+
 import logging
 
 logger = logging.getLogger(__name__)
@@ -42,13 +44,17 @@ class VersionInfo(object):
 
     def are_mentions_supported(self) -> bool:
         """Returns whether the mentions table is present."""
-
         return self.version >= 68
 
     def get_quote_mentions_query_column(self) -> str:
         """Returns a SQL expression to retrieve quote mentions in MMS messages."""
 
         return "quote_mentions" if self.are_mentions_supported() else "''"
+
+    def get_viewed_receipt_count_column(self) -> str:
+        """Returns a SQL expression to retrieve the viewed receipt count of attachments of MMS messages."""
+
+        return "viewed_receipt_count" if self.version >= 83 else "'0'"
 
     def get_thread_recipient_id_column(self) -> str:
         """Returns SQL expression to retrieve recipient id from thread table"""
