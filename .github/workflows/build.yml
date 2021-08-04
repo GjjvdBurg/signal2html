@@ -2,8 +2,11 @@ name: build
 
 on:
   push:
+    branches:
+      - master
   pull_request:
-
+    branches:
+      - master
 
 jobs:
   python:
@@ -25,5 +28,11 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
-      - name: Test
+      - name: Run unit tests
         run: make test_direct
+
+      - name: Run code quality tests (black)
+        uses: psf/black@stable
+
+      - name: Run code quality tests (isort)
+        uses: jamescurtin/isort-action@master

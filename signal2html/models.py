@@ -13,11 +13,14 @@ License: See LICENSE file.
 import os
 
 from abc import ABCMeta
-from dataclasses import dataclass, field
-from typing import List, Dict
+from dataclasses import dataclass
+from dataclasses import field
+from datetime import datetime
 from re import sub
 from unicodedata import normalize
-from datetime import datetime
+
+from typing import Dict
+from typing import List
 
 
 @dataclass
@@ -129,6 +132,7 @@ class Thread:
     mms: List[MMSMessageRecord] = field(default_factory=lambda: [])
     sms: List[SMSMessageRecord] = field(default_factory=lambda: [])
     mentions: Dict[int, Dict[int, Mention]] = field(default_factory=lambda: {})
+    members: List[Recipient] = field(default_factory=lambda: [])
 
     @property
     def is_group(self) -> bool:
