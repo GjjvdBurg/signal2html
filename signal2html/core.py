@@ -15,14 +15,16 @@ import shutil
 import sqlite3
 import uuid
 
+from typing import List
+
 from .__version__ import __version__
+from .addressbook import Addressbook
 from .addressbook import make_addressbook
 from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
 from .dbproto import StructuredGroupDataV2
 from .dbproto import StructuredMemberRole
 from .dbproto import StructuredMentions
-from .dbproto import StructuredReaction
 from .dbproto import StructuredReactions
 from .exceptions import DatabaseNotFound
 from .exceptions import DatabaseVersionNotFound
@@ -567,6 +569,56 @@ def get_mentions(db, addressbook, thread_id, versioninfo):
     return mentions
 
 
+def get_members(
+    db: sqlite3.Cursor,
+    addressbook: Addressbook,
+    thread_id: int,
+    versioninfo: VersionInfo,
+) -> List[Recipient]:
+    """Retrieve the thread members from the database
+
+    Returns
+    -------
+    members: List[Recipient]
+        A list of Recipients for each member in the group.
+    """
+    thread_rid_column = versioninfo.get_thread_recipient_id_column()
+    if versioninfo.is_addressbook_using_rids():
+        query = db.execute(
+            "SELECT r._id, g.members "
+            "FROM thread t "
+            "LEFT JOIN recipient r "
+            f"ON t.{thread_rid_column} = r._id "
+            "LEFT JOIN groups g "
+            "ON g.group_id = r.group_id "
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
+        )
+        query_result = query.fetchall()
+        recipient_id, thread_members = query_result[0]
+    else:
+        query = db.execute(
+            "SELECT t.recipient_ids, g.members "
+            "FROM thread t "
+            "LEFT JOIN groups g "
+            "ON t.recipient_ids = g.group_id "
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
+        )
+        query_result = query.fetchall()
+        recipient_id, thread_members = query_result[0]
+
+    if not thread_members is None:
+        member_addresses = thread_members.split(",")
+        members = []
+        for address in member_addresses:
+            recipient = addressbook.get_recipient_by_address(address)
+            members.append(recipient)
+    else:
+        members = [addressbook.get_recipient_by_address(recipient_id)]
+    return members
+
+
 def populate_thread(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
@@ -582,8 +634,8 @@ def populate_thread(
     )
     thread.sms = sms_records
     thread.mms = mms_records
-
     thread.mentions = get_mentions(db, addressbook, thread._id, versioninfo)
+    thread.members = get_members(db, addressbook, thread._id, versioninfo)
 
 
 def process_backup(backup_dir, output_dir):
