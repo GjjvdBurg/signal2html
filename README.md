@@ -1,5 +1,6 @@
 # signal2html: Convert Signal backups to pretty HTML
 
+[![build](https://github.com/GjjvdBurg/signal2html/actions/workflows/build.yml/badge.svg)](https://github.com/GjjvdBurg/signal2html/actions/workflows/build.yml)
 [![PyPI version](https://badge.fury.io/py/signal2html.svg)](https://pypi.org/project/signal2html)
 [![Downloads](https://pepy.tech/badge/signal2html)](https://pepy.tech/project/signal2html)
 

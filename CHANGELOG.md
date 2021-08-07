@@ -1,5 +1,21 @@
 # Changelog
 
+## Version 0.2.5
+
+* Add support for clickable urls (thanks to @sbaum for reporting 
+  [#37](https://github.com/GjjvdBurg/signal2html/issues/37))
+* Display more message metadata (thanks to @ericthegrey in 
+  [#33](https://github.com/GjjvdBurg/signal2html/pull/33))
+* Add header to threads as in the app (thanks to @Aztorius for suggesting this 
+  in [#39](https://github.com/GjjvdBurg/signal2html/issues/39))
+* Minor formatting fixes for thread messages
+
+## Version 0.2.4
+
+* Bugfix for resolving recipient names for database version 108 and higher 
+  (thanks to @sbaum for reporting 
+  [#34](https://github.com/GjjvdBurg/signal2html/issues/34)).
+
 ## Version 0.2.3
 
 * Bugfix for non-existent recipients (thanks to @ericthegrey 

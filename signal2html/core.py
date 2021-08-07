@@ -6,27 +6,29 @@ License: See LICENSE file.
 
 """
 
-import logging
-import os
-import sqlite3
-import shutil
-import datetime as dt
 import base64
 import binascii
+import datetime as dt
+import logging
+import os
+import shutil
+import sqlite3
 import uuid
 
-from .dbproto import StructuredMemberRole
+from typing import List
+
+from .__version__ import __version__
+from .addressbook import Addressbook
+from .addressbook import make_addressbook
 from .dbproto import StructuredGroupCall
 from .dbproto import StructuredGroupDataV1
 from .dbproto import StructuredGroupDataV2
+from .dbproto import StructuredMemberRole
 from .dbproto import StructuredMentions
 from .dbproto import StructuredReactions
-
-from .addressbook import make_addressbook
-
 from .exceptions import DatabaseNotFound
 from .exceptions import DatabaseVersionNotFound
-
+from .html import dump_thread
 from .models import Attachment
 from .models import GroupCallData
 from .models import GroupUpdateData
@@ -37,15 +39,9 @@ from .models import Quote
 from .models import Reaction
 from .models import SMSMessageRecord
 from .models import Thread
-
-from .html import dump_thread
-
-from .types import (
-    is_group_call,
-    is_group_ctrl,
-    is_group_v2_data,
-)
-
+from .types import is_group_call
+from .types import is_group_ctrl
+from .types import is_group_v2_data
 from .versioninfo import VersionInfo
 
 logger = logging.getLogger(__name__)
@@ -69,7 +65,7 @@ def check_backup(backup_dir) -> VersionInfo:
 
 
 def get_color(db, recipient_id):
-    """ Extract recipient color from the database """
+    """Extract recipient color from the database"""
     query = db.execute(
         "SELECT color FROM recipient_preferences WHERE recipient_ids=?",
         (recipient_id,),
@@ -79,21 +75,33 @@ def get_color(db, recipient_id):
 
 
 def get_sms_records(db, thread, addressbook):
-    """ Collect all the SMS records for a given thread """
+    """Collect all the SMS records for a given thread"""
     sms_records = []
     sms_qry = db.execute(
-        "SELECT _id, address, date, date_sent, body, type "
+        "SELECT _id, address, date, date_sent, body, type, "
+        "delivery_receipt_count, read_receipt_count "
         "FROM sms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = sms_qry.fetchall()
-    for _id, address, date, date_sent, body, _type in qry_res:
+    for (
+        _id,
+        address,
+        date,
+        date_sent,
+        body,
+        _type,
+        delivery_receipt_count,
+        read_receipt_count,
+    ) in qry_res:
 
         data = get_data_from_body(_type, body, addressbook, _id)
-        sms_auth = addressbook.get_recipient_by_address(address)
+        sms_auth = addressbook.get_recipient_by_address(str(address))
         sms = SMSMessageRecord(
             _id=_id,
             data=data,
+            delivery_receipt_count=delivery_receipt_count,
+            read_receipt_count=read_receipt_count,
             addressRecipient=sms_auth,
             recipient=thread.recipient,
             dateSent=date_sent,
@@ -107,7 +115,7 @@ def get_sms_records(db, thread, addressbook):
 
 
 def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
-    """ Get the absolute path of an attachment, warn if it doesn't exist"""
+    """Get the absolute path of an attachment, warn if it doesn't exist"""
     fname = f"Attachment_{_id}_{unique_id}.bin"
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
@@ -126,7 +134,7 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
 
 
 def add_mms_attachments(db, mms, backup_dir, thread_dir):
-    """ Add all attachment objects to MMS message """
+    """Add all attachment objects to MMS message"""
     qry = db.execute(
         "SELECT _id, ct, unique_id, voice_note, width, height, quote "
         "FROM part WHERE mid=?",
@@ -442,15 +450,18 @@ def get_mms_reactions(encoded_reactions, addressbook, mid):
 def get_mms_records(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo
 ):
-    """ Collect all MMS records for a given thread """
+    """Collect all MMS records for a given thread"""
     mms_records = []
 
     reaction_expr = versioninfo.get_reactions_query_column()
     quote_mentions_expr = versioninfo.get_quote_mentions_query_column()
+    viewed_receipt_count_expr = versioninfo.get_viewed_receipt_count_column()
 
     qry = db.execute(
         "SELECT _id, address, date, date_received, body, quote_id, "
-        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr} FROM mms WHERE thread_id=?",
+        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr}, "
+        f"delivery_receipt_count, read_receipt_count, {viewed_receipt_count_expr} "
+        "FROM mms WHERE thread_id=?",
         (thread._id,),
     )
     qry_res = qry.fetchall()
@@ -466,6 +477,9 @@ def get_mms_records(
         quote_mentions,
         msg_box,
         reactions,
+        delivery_receipt_count,
+        read_receipt_count,
+        viewed_receipt_count,
     ) in qry_res:
         quote = get_mms_quote(
             addressbook,
@@ -479,10 +493,12 @@ def get_mms_records(
         decoded_reactions = get_mms_reactions(reactions, addressbook, _id)
 
         data = get_data_from_body(msg_box, body, addressbook, _id)
-        mms_auth = addressbook.get_recipient_by_address(address)
+        mms_auth = addressbook.get_recipient_by_address(str(address))
         mms = MMSMessageRecord(
             _id=_id,
             data=data,
+            delivery_receipt_count=delivery_receipt_count,
+            read_receipt_count=read_receipt_count,
             addressRecipient=mms_auth,
             recipient=thread.recipient,
             dateSent=date,
@@ -493,6 +509,7 @@ def get_mms_records(
             attachments=[],
             reactions=decoded_reactions,
             _type=msg_box,
+            viewed_receipt_count=viewed_receipt_count,
         )
         mms_records.append(mms)
 
@@ -551,10 +568,60 @@ def get_mentions(db, addressbook, thread_id, versioninfo):
     return mentions
 
 
+def get_members(
+    db: sqlite3.Cursor,
+    addressbook: Addressbook,
+    thread_id: int,
+    versioninfo: VersionInfo,
+) -> List[Recipient]:
+    """Retrieve the thread members from the database
+
+    Returns
+    -------
+    members: List[Recipient]
+        A list of Recipients for each member in the group.
+    """
+    thread_rid_column = versioninfo.get_thread_recipient_id_column()
+    if versioninfo.is_addressbook_using_rids():
+        query = db.execute(
+            "SELECT r._id, g.members "
+            "FROM thread t "
+            "LEFT JOIN recipient r "
+            f"ON t.{thread_rid_column} = r._id "
+            "LEFT JOIN groups g "
+            "ON g.group_id = r.group_id "
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
+        )
+        query_result = query.fetchall()
+        recipient_id, thread_members = query_result[0]
+    else:
+        query = db.execute(
+            "SELECT t.recipient_ids, g.members "
+            "FROM thread t "
+            "LEFT JOIN groups g "
+            "ON t.recipient_ids = g.group_id "
+            "WHERE t._id = :thread_id",
+            {"thread_id": thread_id},
+        )
+        query_result = query.fetchall()
+        recipient_id, thread_members = query_result[0]
+
+    if not thread_members is None:
+        member_addresses = thread_members.split(",")
+        members = []
+        for address in member_addresses:
+            recipient = addressbook.get_recipient_by_address(address)
+            members.append(recipient)
+    else:
+        members = [addressbook.get_recipient_by_address(recipient_id)]
+    return members
+
+
 def populate_thread(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
-    """ Populate a thread with all corresponding messages """
+    """Populate a thread with all corresponding messages"""
     sms_records = get_sms_records(db, thread, addressbook)
     mms_records = get_mms_records(
         db,
@@ -566,12 +633,14 @@ def populate_thread(
     )
     thread.sms = sms_records
     thread.mms = mms_records
-
     thread.mentions = get_mentions(db, addressbook, thread._id, versioninfo)
+    thread.members = get_members(db, addressbook, thread._id, versioninfo)
 
 
 def process_backup(backup_dir, output_dir):
-    """ Main functionality to convert database into HTML """
+    """Main functionality to convert database into HTML"""
+
+    logger.info(f"signal2html version {__version__}")
 
     # Verify backup and open database
     versioninfo = check_backup(backup_dir)
@@ -590,7 +659,7 @@ def process_backup(backup_dir, output_dir):
 
     # Combine the recipient objects and the thread info into Thread objects
     for (_id, recipient_id) in threads:
-        recipient = addressbook.get_recipient_by_address(recipient_id)
+        recipient = addressbook.get_recipient_by_address(str(recipient_id))
         if recipient is None:
             logger.warn(f"No recipient with address {recipient_id}")
 

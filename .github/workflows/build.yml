@@ -1,0 +1,38 @@
+name: build
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+
+jobs:
+  python:
+    name: Testing signal2html
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        # Can add others if deemed necessary
+        os: [ 'ubuntu-latest' ]
+        # minimal and latest
+        py: [ '3.6', '3.9' ]
+
+    steps:
+      - name: Install Python ${{ matrix.py }}
+        uses: actions/setup-python@v2
+        with:
+          python-version: ${{ matrix.py }}
+
+      - name: Checkout
+        uses: actions/checkout@v2
+
+      - name: Run unit tests
+        run: make test_direct
+
+      - name: Run code quality tests (black)
+        uses: psf/black@stable
+
+      - name: Run code quality tests (isort)
+        uses: jamescurtin/isort-action@master
