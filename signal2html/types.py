@@ -32,7 +32,7 @@ KEY_EXCHANGE_IDENTITY_UPDATE_BIT = 0x200
 GROUP_UPDATE_BIT = 0x10000
 GROUP_V2_BIT = 0x80000
 
-SECURE_BIT = 0x800000
+SECURE_MESSAGE_BIT = 0x800000
 
 BASE_INBOX_TYPE = 20
 BASE_OUTBOX_TYPE = 21
@@ -138,16 +138,16 @@ def is_group_v1_migration_event(_type) -> bool:
     return _type == GV1_MIGRATION_TYPE
 
 
-def is_secure(_type):
-    return _type & SECURE_BIT == SECURE_BIT
+def is_secure_type(_type):
+    return _type & SECURE_MESSAGE_BIT != 0
 
 
-def is_group_ctrl(_type):
-    return _type & GROUP_UPDATE_BIT == GROUP_UPDATE_BIT
+def is_group_update(_type):
+    return (_type & GROUP_UPDATE_BIT) != 0
 
 
-def is_group_v2_data(_type):
-    return _type & GROUP_V2_BIT == GROUP_V2_BIT
+def is_group_v2(_type):
+    return (_type & GROUP_V2_BIT) != 0
 
 
 def is_joined_type(_type):
@@ -155,8 +155,8 @@ def is_joined_type(_type):
 
 
 def get_named_message_type(_type):
-    if is_group_ctrl(_type):
-        if is_group_v2_data(_type):
+    if is_group_update(_type):
+        if is_group_v2(_type):
             return "group-update-v2"
         else:
             return "group-update-v1"
