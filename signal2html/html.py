@@ -51,7 +51,8 @@ def format_message(body, mentions=None):
     if body is None:
         return None
 
-    mentions = mentions or {}
+    if mentions is None:
+        mentions = {}
 
     emoji_pos = emoji_list(body)
     new_body = ""
