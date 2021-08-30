@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.6
+
+* Bugfix for handling mentions
+
 ## Version 0.2.5
 
 * Add support for clickable urls (thanks to @sbaum for reporting 
