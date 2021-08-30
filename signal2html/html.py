@@ -42,7 +42,7 @@ def is_all_emoji(body):
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
-def format_message(body, mentions={}):
+def format_message(body, mentions=None):
     """Format message by processing all characters.
 
     - Wrap emoji in <span> for styling them
@@ -50,6 +50,9 @@ def format_message(body, mentions={}):
     """
     if body is None:
         return None
+
+    if mentions is None:
+        mentions = {}
 
     emoji_pos = emoji_list(body)
     new_body = ""
