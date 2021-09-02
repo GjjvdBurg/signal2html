@@ -41,8 +41,8 @@ from .models import Recipient
 from .models import SMSMessageRecord
 from .models import Thread
 from .types import is_group_call
-from .types import is_group_ctrl
-from .types import is_group_v2_data
+from .types import is_group_update
+from .types import is_group_v2
 from .versioninfo import VersionInfo
 
 logger = logging.getLogger(__name__)
@@ -368,8 +368,8 @@ def get_data_from_body(_type, body, addressbook, mid):
     data = None
     if is_group_call(_type):
         data = get_group_call_data(decode_body(body), addressbook, mid)
-    elif is_group_ctrl(_type):
-        if is_group_v2_data(_type):
+    elif is_group_update(_type):
+        if is_group_v2(_type):
             data = get_group_update_data_v2(
                 decode_body(body), addressbook, mid
             )

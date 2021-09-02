@@ -11,7 +11,6 @@ import logging
 
 from .html_colors import get_random_color
 from .models import Recipient
-from .versioninfo import VersionInfo
 
 
 class Addressbook(metaclass=abc.ABCMeta):
@@ -229,11 +228,9 @@ class AddressbookV2(Addressbook):
             self.logger.warn(
                 f"Recipient with rid {address} not in addressbook, adding it."
             )
-            return self._add_recipient(
-                rid, "", "", get_random_color(), False, ""
-            )
-        else:
-            return recipient
+            color = get_random_color()
+            return self._add_recipient(rid, "", "", color, False, "")
+        return recipient
 
     def _isgroup(self, group_id) -> bool:
         """Decides whether a group_id refers to a group."""

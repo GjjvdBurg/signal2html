@@ -353,7 +353,7 @@
     </div>
     <div class="message-box">
 {% for msg in messages %}
-  {% if "date_msg" in msg %}
+  {% if msg.date_msg %}
       <div class="msg msg-date-change">
         <p>
           {{ msg.body }}

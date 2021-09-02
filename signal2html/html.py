@@ -11,6 +11,10 @@ import logging
 
 from types import SimpleNamespace as ns
 
+from typing import Any
+from typing import Dict
+from typing import List
+
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
@@ -24,14 +28,15 @@ from .models import Thread
 from .types import DisplayType
 from .types import get_named_message_type
 from .types import is_group_call
-from .types import is_group_ctrl
+from .types import is_group_update
+from .types import is_group_v1_migration_event
+from .types import is_identity_update
 from .types import is_inbox_type
 from .types import is_incoming_call
 from .types import is_joined_type
-from .types import is_key_update
 from .types import is_missed_call
 from .types import is_outgoing_call
-from .types import is_secure
+from .types import is_secure_type
 
 logger = logging.getLogger(__name__)
 
@@ -145,6 +150,47 @@ def format_event_data_group_update(data):
     return event_data
 
 
+def is_empty_message(msg: Dict[str, Any]) -> bool:
+    return not (
+        msg["body"]
+        or (not msg["event_data"] is None)
+        or msg["isCall"]
+        or msg["quote"]
+        or msg["reactions"]
+        or msg["isAllEmoji"]
+        or msg["attachments"]
+    )
+
+
+def filter_date_messages(
+    messages: List[Dict[str, Any]]
+) -> List[Dict[str, Any]]:
+    """Filter consecutive date change messages
+
+    This function removes consecutive date change messages with nothing in
+    between. This can occur when empty messages are filtered out. Trailing date
+    change messages are also removed, as are threads that consist of a single
+    date change message.
+    """
+    new_messages = []
+    if not messages:
+        return new_messages
+
+    if len(messages) == 1 and messages[0]["date_msg"]:
+        return new_messages
+
+    a, b = iter(messages), iter(messages)
+    next(b, None)
+    for m1, m2 in zip(a, b):
+        if m1["date_msg"] and m2["date_msg"]:
+            continue
+        new_messages.append(m1)
+
+    if not m2["date_msg"]:
+        new_messages.append(m2)
+    return new_messages
+
+
 def dump_thread(thread: Thread, output_dir: str):
     """Write a Thread instance to a HTML page in the output directory"""
 
@@ -235,14 +281,16 @@ def dump_thread(thread: Thread, output_dir: str):
                     event_data = format_message(msg.data.initiator)
             else:
                 logger.warn(f"Group call for {msg._id} without data")
-        elif is_key_update(msg._type):
+        elif is_identity_update(msg._type):
             is_event = True
             event_data = format_message(msg.addressRecipient.name)
-        elif is_group_ctrl(msg._type):
+        elif is_group_update(msg._type):
             is_event = True
             event_data = format_event_data_group_update(
                 msg.data
             )  # "Group update (v2)"
+        elif is_group_v1_migration_event(msg._type):
+            continue
 
         # Deal with quoted messages
         quote = {}
@@ -284,6 +332,7 @@ def dump_thread(thread: Thread, output_dir: str):
         # Create message dictionary
         aR = msg.addressRecipient
         out = {
+            "date_msg": False,
             "isAllEmoji": all_emoji,
             "isGroup": thread.is_group,
             "isCall": is_event,
@@ -294,7 +343,7 @@ def dump_thread(thread: Thread, output_dir: str):
             "attachments": [],
             "id": msg._id,
             "name": aR.name,
-            "secure": is_secure(msg._type) or is_event,
+            "secure": is_secure_type(msg._type) or is_event,
             "send_state": send_state,
             "delivery_receipt_count": msg.delivery_receipt_count,
             "read_receipt_count": msg.read_receipt_count,
@@ -322,7 +371,14 @@ def dump_thread(thread: Thread, output_dir: str):
                     }
                 )
 
+        if is_empty_message(out):
+            continue
+
         simple_messages.append(out)
+
+    # Filter out repeated date change messages with no actual messages in
+    # between
+    simple_messages = filter_date_messages(simple_messages)
 
     if not simple_messages:
         return
