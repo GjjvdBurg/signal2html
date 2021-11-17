@@ -33,7 +33,3 @@ def parse_args():
 def main():
     args = parse_args()
     process_backup(args.input_dir, args.output_dir)
-
-
-if __name__ == "__main__":
-    main()

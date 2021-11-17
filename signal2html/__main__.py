@@ -5,16 +5,20 @@
 License: See LICENSE file.
 """
 
-import logging
-import sys
-
 
 def main():
-    from .ui import main as realmain
+    import logging
+    import sys
 
-    sys.exit(realmain())
+    from .ui import main
+
+    logging.basicConfig(
+        datefmt="%Y-%m-%d %H:%M:%S",
+        format="%(asctime)s | %(levelname)s - %(message)s",
+        level=logging.INFO,
+    )
+    sys.exit(main())
 
 
 if __name__ == "__main__":
-    logging.basicConfig(level=logging.INFO)
     main()

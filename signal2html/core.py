@@ -121,7 +121,7 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
         logger.warn(
-            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded."
+            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded?"
         )
         return None
 
@@ -641,7 +641,7 @@ def populate_thread(
 def process_backup(backup_dir, output_dir):
     """Main functionality to convert database into HTML"""
 
-    logger.info(f"signal2html version {__version__}")
+    logger.info(f"This is signal2html version {__version__}")
 
     # Verify backup and open database
     versioninfo = check_backup(backup_dir)
