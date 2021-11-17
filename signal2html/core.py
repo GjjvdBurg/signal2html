@@ -217,7 +217,7 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
         logger.warn(
             f"Failed to load group update data (v1) for message {mid}: {str(e)}"
         )
-        return []
+        return None
 
     members = dict()
     for member in structured_group_data.members:
@@ -297,7 +297,7 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
         logger.warn(
             f"Failed to load group update data (v2) for message {mid}: {str(e)}"
         )
-        return []
+        return None
 
     change = structured_group_data.change
     deleted_members = []
