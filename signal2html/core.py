@@ -391,31 +391,31 @@ def get_data_from_body(_type, body, addressbook, mid):
 def get_mms_mentions(encoded_mentions, addressbook, mid):
     """Decode mentions encoded in a SQL blob."""
     mentions = {}
-    if encoded_mentions:
-        try:
-            structured_mentions = StructuredMentions.loads(encoded_mentions)
-        except (ValueError, IndexError, TypeError) as e:
-            logger.warn(
-                f"Failed to load quote mentions for message {mid}:\n"
-                f"Encoded mentions: '{encoded_mentions}'\n"
-                f"Error message: {str(e)}"
-            )
-            return {}
+    if not encoded_mentions:
+        return mentions
 
-        for structured_mention in structured_mentions.mentions:
-            recipient = addressbook.get_recipient_by_uuid(
-                structured_mention.who_uuid
-            )
-            name = recipient.name
-            mention = Mention(
-                mention_id=-1, name=name, length=structured_mention.length
-            )
-            range_start = (
-                0
-                if structured_mention.start is None
-                else structured_mention.start
-            )
-            mentions[range_start] = mention
+    try:
+        structured_mentions = StructuredMentions.loads(encoded_mentions)
+    except (ValueError, IndexError, TypeError) as e:
+        logger.warn(
+            f"Failed to load quote mentions for message {mid}:\n"
+            f"Encoded mentions: '{encoded_mentions}'\n"
+            f"Error message: {str(e)}"
+        )
+        return mentions
+
+    for structured_mention in structured_mentions.mentions:
+        recipient = addressbook.get_recipient_by_uuid(
+            structured_mention.who_uuid
+        )
+        name = recipient.name
+        mention = Mention(
+            mention_id=-1, name=name, length=structured_mention.length
+        )
+        range_start = (
+            0 if structured_mention.start is None else structured_mention.start
+        )
+        mentions[range_start] = mention
 
     return mentions
 
@@ -423,38 +423,40 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
 def get_mms_reactions(encoded_reactions, addressbook, mid):
     """Decode reactions encoded in a SQL blob."""
     reactions = []
-    if encoded_reactions:
-        try:
-            structured_reactions = StructuredReactions.loads(encoded_reactions)
-        except (ValueError, IndexError, TypeError) as e:
-            logger.warn(
-                f"Failed to load reactions for message {mid}:\n"
-                f"Encoded reactions: '{encoded_reactions}'\n"
-                f"Error message: {str(e)}"
-            )
-            return []
+    if not encoded_reactions:
+        return reactions
 
-        for structured_reaction in structured_reactions.reactions:
-            recipient = addressbook.get_recipient_by_address(
-                str(structured_reaction.who)
-            )
-            reaction = Reaction(
-                recipient=recipient,
-                what=structured_reaction.what,
-                time_sent=dt.datetime.fromtimestamp(
-                    structured_reaction.time_sent // 1000
-                ),
-                time_received=dt.datetime.fromtimestamp(
-                    structured_reaction.time_received // 1000
-                ),
-            )
-            reaction.time_sent = reaction.time_sent.replace(
-                microsecond=(structured_reaction.time_sent % 1000) * 1000
-            )
-            reaction.time_received = reaction.time_received.replace(
-                microsecond=(structured_reaction.time_received % 1000) * 1000
-            )
-            reactions.append(reaction)
+    try:
+        structured_reactions = StructuredReactions.loads(encoded_reactions)
+    except (ValueError, IndexError, TypeError) as e:
+        logger.warn(
+            f"Failed to load reactions for message {mid}:\n"
+            f"Encoded reactions: '{encoded_reactions}'\n"
+            f"Error message: {str(e)}"
+        )
+        return reactions
+
+    for structured_reaction in structured_reactions.reactions:
+        recipient = addressbook.get_recipient_by_address(
+            str(structured_reaction.who)
+        )
+        reaction = Reaction(
+            recipient=recipient,
+            what=structured_reaction.what,
+            time_sent=dt.datetime.fromtimestamp(
+                structured_reaction.time_sent // 1000
+            ),
+            time_received=dt.datetime.fromtimestamp(
+                structured_reaction.time_received // 1000
+            ),
+        )
+        reaction.time_sent = reaction.time_sent.replace(
+            microsecond=(structured_reaction.time_sent % 1000) * 1000
+        )
+        reaction.time_received = reaction.time_received.replace(
+            microsecond=(structured_reaction.time_received % 1000) * 1000
+        )
+        reactions.append(reaction)
 
     return reactions
 
