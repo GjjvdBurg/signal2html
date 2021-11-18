@@ -179,7 +179,7 @@ def get_group_call_data(rawbody, addressbook, mid):
             f"Message body: '{rawbody}'\n"
             f"Error message: {str(e)}"
         )
-        return []
+        return None
 
     timestamp = dt.datetime.fromtimestamp(structured_call.when // 1000)
     timestamp = timestamp.replace(
@@ -399,7 +399,7 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
                 f"Encoded mentions: '{encoded_mentions}'\n"
                 f"Error message: {str(e)}"
             )
-            return []
+            return {}
 
         for structured_mention in structured_mentions.mentions:
             recipient = addressbook.get_recipient_by_uuid(
