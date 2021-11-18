@@ -11,6 +11,9 @@ import logging
 
 from types import SimpleNamespace as ns
 
+from typing import Dict
+from typing import Optional
+
 from emoji import emoji_lis as emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
@@ -19,6 +22,7 @@ from jinja2 import select_autoescape
 from .html_colors import get_color
 from .html_colors import list_colors
 from .linkify import linkify
+from .models import Mention
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import DisplayType
@@ -36,13 +40,15 @@ from .types import is_secure
 logger = logging.getLogger(__name__)
 
 
-def is_all_emoji(body):
+def is_all_emoji(body: str) -> bool:
     """Check if a message is non-empty and only contains emoji"""
     body = body.replace(" ", "").replace("\ufe0f", "")
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
-def format_message(body, mentions=None):
+def format_message(
+    body: Optional[str], mentions: Optional[Dict[int, Mention]] = None
+) -> Optional[str]:
     """Format message by processing all characters.
 
     - Wrap emoji in <span> for styling them
@@ -91,7 +97,7 @@ def format_message(body, mentions=None):
 
 
 def format_member_list(header: str, member_list):
-    """Return a list of printable group members belonging to a category (e.g. new members)."""
+    """Return a list of printable group members belonging to a category"""
     people = ns()
     people.header = header
     people.members = list()
@@ -99,14 +105,20 @@ def format_member_list(header: str, member_list):
         designation = ""
         if not member.match_from_phone:
             if member.phone:
-                designation = f"{format_message(member.name)} ({format_message(member.phone)})"
+                designation = (
+                    f"{format_message(member.name)} "
+                    f"({format_message(member.phone)})"
+                )
             else:
                 designation = f"{format_message(member.name)}"
         else:
             if member.name is None or member.name == member.phone:
                 designation = f"{format_message(member.phone)}"
             else:
-                designation = f"{format_message(member.phone)} ~ {format_message(member.name)}"
+                designation = (
+                    f"{format_message(member.phone)} ~ "
+                    f"{format_message(member.name)}"
+                )
 
         if member.admin:
             designation += " (admin)"

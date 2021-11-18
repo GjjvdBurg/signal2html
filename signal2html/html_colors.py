@@ -9,6 +9,8 @@ License: See LICENSE file.
 import logging
 import random
 
+from typing import List
+
 logger = logging.getLogger(__name__)
 
 CRIMSON = "#CC163D"
@@ -134,11 +136,11 @@ AVATAR_COLORS = {
 }
 
 
-def list_colors():
+def list_colors() -> List[str]:
     return sorted(set(list(COLORMAP.keys()) + list(AVATAR_COLORS.keys())))
 
 
-def get_color(name):
+def get_color(name: str) -> str:
     color = COLORMAP.get(name, None) or AVATAR_COLORS.get(name, None)
     if not color is None:
         return color
@@ -146,5 +148,5 @@ def get_color(name):
     return AVATAR_COLORS["unknown"]
 
 
-def get_random_color():
+def get_random_color() -> str:
     return random.choice(list(COLORMAP.keys()))

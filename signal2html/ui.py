@@ -12,7 +12,7 @@ from . import __version__
 from .core import process_backup
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i", "--input-dir", help="Input directory", required=True

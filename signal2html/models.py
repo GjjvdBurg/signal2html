@@ -139,7 +139,7 @@ class Thread:
         return self.recipient.isgroup
 
     @property
-    def sanephone(self):
+    def sanephone(self) -> str:
         """Return a sanitized phone number suitable for use as filename, and fallback on rid.
 
         NOTE: Phone numbers can be alphanumerical characters especially coming over SMS
@@ -150,19 +150,19 @@ class Thread:
         return "#" + str(self.recipient.rid)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the raw name or other useful identifier, suitable for display."""
         return self.recipient.name.strip()
 
     @property
-    def sanename(self):
+    def sanename(self) -> str:
         """Return a sanitized name or other useful identifier, suitable for use
         as filename, and fallback on rid."""
         if self.recipient.name:
             return self._sanitize(self.recipient.name)
         return "#" + str(self.recipient.rid)
 
-    def _sanitize(self, text):
+    def _sanitize(self, text: str) -> str:
         """Sanitize text to use as filename"""
         clean = normalize("NFKC", text.strip())
         clean = clean.lstrip(".#")
