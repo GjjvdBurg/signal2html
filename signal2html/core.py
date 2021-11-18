@@ -161,7 +161,7 @@ def decode_body(body):
     try:
         return base64.b64decode(body)
     except (TypeError, ValueError, binascii.Error) as e:
-        logger.warn(f"Failed to decode body for message {mid}: {str(e)}")
+        logger.warn(f"Failed to decode body for message '{body}': {str(e)}")
         return None
 
 
@@ -175,7 +175,9 @@ def get_group_call_data(rawbody, addressbook, mid):
         structured_call = StructuredGroupCall.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group call data for message {mid}: {str(e)}"
+            f"Failed to load group call data for message {mid}:\n"
+            f"Message body: '{rawbody}'\n"
+            f"Error message: {str(e)}"
         )
         return []
 
@@ -215,7 +217,9 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
         structured_group_data = StructuredGroupDataV1.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v1) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v1) for message {mid}:\n"
+            f"Message body: '{rawbody}'\n"
+            f"Error message: {str(e)}"
         )
         return None
 
@@ -295,7 +299,9 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
         structured_group_data = StructuredGroupDataV2.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v2) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v2) for message {mid}:\n"
+            f"Message body: '{rawbody}'\n"
+            f"Error message: {str(e)}"
         )
         return None
 
@@ -389,7 +395,9 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
             structured_mentions = StructuredMentions.loads(encoded_mentions)
         except (ValueError, IndexError, TypeError) as e:
             logger.warn(
-                f"Failed to load quote mentions for message {mid}: {str(e)}"
+                f"Failed to load quote mentions for message {mid}:\n"
+                f"Encoded mentions: '{encoded_mentions}'\n"
+                f"Error message: {str(e)}"
             )
             return []
 
@@ -419,7 +427,9 @@ def get_mms_reactions(encoded_reactions, addressbook, mid):
             structured_reactions = StructuredReactions.loads(encoded_reactions)
         except (ValueError, IndexError, TypeError) as e:
             logger.warn(
-                f"Failed to load reactions for message {mid}: {str(e)}"
+                f"Failed to load reactions for message {mid}:\n"
+                f"Encoded reactions: '{encoded_reactions}'\n"
+                f"Error message: {str(e)}"
             )
             return []
 
