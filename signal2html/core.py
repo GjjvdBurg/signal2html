@@ -121,7 +121,8 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
         logger.warn(
-            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded?"
+            f"Couldn't find attachment '{source}'. "
+            "Maybe it was deleted or never downloaded?"
         )
         return None
 
