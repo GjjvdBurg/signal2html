@@ -27,8 +27,8 @@ REQUIRED = [
 ]
 
 docs_require = []
-test_require = []
-dev_require = ["green", "black", "isort"]
+test_require = ["green", "mypy"]
+dev_require = ["black", "isort"]
 
 # What packages are optional?
 EXTRAS = {
