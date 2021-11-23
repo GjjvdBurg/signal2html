@@ -11,6 +11,7 @@ import logging
 
 from types import SimpleNamespace as ns
 
+from typing import Any
 from typing import Dict
 from typing import Optional
 
@@ -257,7 +258,7 @@ def dump_thread(thread: Thread, output_dir: str):
             )  # "Group update (v2)"
 
         # Deal with quoted messages
-        quote = {}
+        quote: Dict[str, Any] = {}
         if isinstance(msg, MMSMessageRecord) and msg.quote:
             quote_author_id = msg.quote.author.rid
             quote_author_name = msg.quote.author.name

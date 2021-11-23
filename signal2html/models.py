@@ -19,8 +19,10 @@ from datetime import datetime
 from re import sub
 from unicodedata import normalize
 
+from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 
 @dataclass
@@ -32,7 +34,7 @@ class Recipient:
     phone: str
     uuid: str
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.rid)
 
 
@@ -70,7 +72,7 @@ class GroupCallData:
 
 @dataclass
 class MemberInfo:
-    name: str
+    name: Optional[str]
     phone: str
     match_from_phone: bool
     admin: bool
@@ -99,7 +101,7 @@ class DisplayRecord(metaclass=ABCMeta):
 @dataclass
 class MessageRecord(DisplayRecord):
     _id: int
-    data: any
+    data: Any
     delivery_receipt_count: int
     read_receipt_count: int
 

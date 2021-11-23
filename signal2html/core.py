@@ -122,15 +122,16 @@ def get_sms_records(
 
 def get_attachment_filename(
     _id: str, unique_id: str, backup_dir: str, thread_dir: str
-) -> Optional[str]:
+) -> str:
     """Get the absolute path of an attachment, warn if it doesn't exist"""
     fname = f"Attachment_{_id}_{unique_id}.bin"
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
         logger.warn(
-            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded?"
+            f"Couldn't find attachment '{source}'. "
+            "Maybe it was deleted or never downloaded?"
         )
-        return None
+        return "__MISSING__"
 
     # Copying here is a bit of a side-effect
     target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
@@ -170,7 +171,7 @@ def decode_body(body: Union[str, bytes]) -> Optional[bytes]:
     try:
         return base64.b64decode(body)
     except (TypeError, ValueError, binascii.Error) as e:
-        logger.warn(f"Failed to decode body for message '{body}': {str(e)}")
+        logger.warn(f"Failed to decode body for message '{body!r}': {str(e)}")
         return None
 
 
@@ -207,7 +208,7 @@ def get_group_call_data(
 
 
 def get_group_update_data_v1(
-    rawbody: bytes, addressbook: Addressbook, mid: int
+    rawbody: Optional[bytes], addressbook: Addressbook, mid: int
 ) -> Optional[GroupUpdateData]:
     """Get the data for a Group V1 update.
 
@@ -237,9 +238,11 @@ def get_group_update_data_v1(
         name = None
         match_from_phone = False
         if member.uuid:
-            name = addressbook.get_recipient_by_uuid(member.uuid).name
+            recip = addressbook.get_recipient_by_uuid(member.uuid)
+            name = None if recip is None else recip.name
         elif member.phone:
-            name = addressbook.get_recipient_by_phone(member.phone).name
+            recip = addressbook.get_recipient_by_phone(member.phone)
+            name = None if recip is None else recip.name
             match_from_phone = True
 
         member_info = MemberInfo(
@@ -252,7 +255,8 @@ def get_group_update_data_v1(
 
     for phone_member in structured_group_data.phone_members:
         if not members.get(phone_member):
-            name = addressbook.get_recipient_by_phone(phone_member).name
+            recip = addressbook.get_recipient_by_phone(phone_member)
+            name = None if recip is None else recip.name
             member_info = MemberInfo(
                 name=name,
                 phone=phone_member,
@@ -291,7 +295,7 @@ def get_member_by_raw_uuid(
 
 
 def get_group_update_data_v2(
-    rawbody: bytes, addressbook: Addressbook, mid: int
+    rawbody: Optional[bytes], addressbook: Addressbook, mid: int
 ) -> Optional[GroupUpdateData]:
     """Get the data for a Group V2 update.
 
@@ -404,7 +408,7 @@ def get_mms_mentions(
     encoded_mentions: bytes, addressbook: Addressbook, mid: int
 ) -> Dict[int, Mention]:
     """Decode mentions encoded in a SQL blob."""
-    mentions = {}
+    mentions: Dict[int, Mention] = {}
     if not encoded_mentions:
         return mentions
 
@@ -436,7 +440,7 @@ def get_mms_reactions(
     encoded_reactions: bytes, addressbook: Addressbook, mid: int
 ) -> List[Reaction]:
     """Decode reactions encoded in a SQL blob."""
-    reactions = []
+    reactions: List[Reaction] = []
     if not encoded_reactions:
         return reactions
 
@@ -575,34 +579,36 @@ def get_mentions(
     addressbook: Addressbook,
     thread_id: int,
     versioninfo: VersionInfo,
-) -> List[Mention]:
+) -> Dict[int, Dict[int, Mention]]:
     """Retrieve all mentions in the DB for the requested thread into a dictionary."""
-    mentions = {}
+    mentions: Dict[int, Dict[int, Mention]] = {}
 
-    if versioninfo.are_mentions_supported():
-        query = db.execute(
-            "SELECT _id, message_id, recipient_id, range_start, range_length "
-            "FROM mention WHERE thread_id=?",
-            (thread_id,),
+    if not versioninfo.are_mentions_supported():
+        return mentions
+
+    query = db.execute(
+        "SELECT _id, message_id, recipient_id, range_start, range_length "
+        "FROM mention WHERE thread_id=?",
+        (thread_id,),
+    )
+    mentions_data = query.fetchall()
+
+    for (
+        _id,
+        message_id,
+        recipient_id,
+        range_start,
+        range_length,
+    ) in mentions_data:
+        name = addressbook.get_recipient_by_address(str(recipient_id)).name
+        mention = Mention(
+            mention_id=_id,
+            name=name,
+            length=range_length,
         )
-        mentions_data = query.fetchall()
-
-        for (
-            _id,
-            message_id,
-            recipient_id,
-            range_start,
-            range_length,
-        ) in mentions_data:
-            name = addressbook.get_recipient_by_address(str(recipient_id)).name
-            mention = Mention(
-                mention_id=_id,
-                name=name,
-                length=range_length,
-            )
-            if not message_id in mentions.keys():
-                mentions[message_id] = {}
-            mentions[message_id][range_start] = mention
+        if not message_id in mentions.keys():
+            mentions[message_id] = {}
+        mentions[message_id][range_start] = mention
 
     return mentions
 
@@ -663,7 +669,7 @@ def populate_thread(
     addressbook: Addressbook,
     backup_dir: str,
     thread_dir: str,
-    versioninfo: Optional[VersionInfo] = None,
+    versioninfo: VersionInfo,
 ):
     """Populate a thread with all corresponding messages"""
     sms_records = get_sms_records(db, thread, addressbook)
@@ -710,7 +716,7 @@ def process_backup(backup_dir: str, output_dir: str):
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = t.get_thread_dir(output_dir, make_dir=False)
         populate_thread(
-            db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
+            db, t, addressbook, backup_dir, thread_dir, versioninfo
         )
         dump_thread(t, output_dir)
 
