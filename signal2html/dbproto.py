@@ -5,6 +5,11 @@
 
 These classes are used to extract values in the database encoded as protobuf messages.
 
+Signal protobuf definitions are defined in these directories:
+
+    https://github.com/signalapp/Signal-Android/tree/master/libsignal/service/src/main/proto
+    https://github.com/signalapp/Signal-Android/tree/master/app/src/main/proto
+
 License: See LICENSE file.
 """
 
