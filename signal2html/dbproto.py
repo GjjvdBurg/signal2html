@@ -113,5 +113,5 @@ class StructuredGroupV2State:
 @message
 @dataclass
 class StructuredGroupDataV2:
-    change: StructuredGroupV2Change = field(2)
-    state: StructuredGroupV2State = field(3)
+    change: StructuredGroupV2Change = optional_field(2)
+    state: StructuredGroupV2State = optional_field(3)
