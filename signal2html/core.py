@@ -177,7 +177,6 @@ def get_group_call_data(rawbody, addressbook, mid):
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
             f"Failed to load group call data for message {mid}:\n"
-            f"Message body: '{rawbody}'\n"
             f"Error message: {str(e)}"
         )
         return None
@@ -301,7 +300,6 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
             f"Failed to load group update data (v2) for message {mid}:\n"
-            f"Message body: '{rawbody}'\n"
             f"Error message: {str(e)}"
         )
         return None
@@ -399,7 +397,6 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
             f"Failed to load quote mentions for message {mid}:\n"
-            f"Encoded mentions: '{encoded_mentions}'\n"
             f"Error message: {str(e)}"
         )
         return mentions
@@ -431,7 +428,6 @@ def get_mms_reactions(encoded_reactions, addressbook, mid):
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
             f"Failed to load reactions for message {mid}:\n"
-            f"Encoded reactions: '{encoded_reactions}'\n"
             f"Error message: {str(e)}"
         )
         return reactions
