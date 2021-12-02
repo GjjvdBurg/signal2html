@@ -218,7 +218,6 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
             f"Failed to load group update data (v1) for message {mid}:\n"
-            f"Message body: '{rawbody}'\n"
             f"Error message: {str(e)}"
         )
         return None
