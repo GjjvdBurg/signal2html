@@ -238,7 +238,7 @@ def dump_thread(thread: Thread, output_dir: str):
         elif is_key_update(msg._type):
             is_event = True
             event_data = format_message(msg.addressRecipient.name)
-        elif is_group_ctrl(msg._type):
+        elif is_group_ctrl(msg._type) and not msg.data is None:
             is_event = True
             event_data = format_event_data_group_update(
                 msg.data

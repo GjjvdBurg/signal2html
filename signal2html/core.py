@@ -121,7 +121,8 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
     source = os.path.abspath(os.path.join(backup_dir, fname))
     if not os.path.exists(source):
         logger.warn(
-            f"Couldn't find attachment '{source}'. Maybe it was deleted or never downloaded?"
+            f"Couldn't find attachment '{source}'. "
+            "Maybe it was deleted or never downloaded?"
         )
         return None
 
@@ -161,7 +162,7 @@ def decode_body(body):
     try:
         return base64.b64decode(body)
     except (TypeError, ValueError, binascii.Error) as e:
-        logger.warn(f"Failed to decode body for message {mid}: {str(e)}")
+        logger.warn(f"Failed to decode body for message '{body}': {str(e)}")
         return None
 
 
@@ -175,9 +176,10 @@ def get_group_call_data(rawbody, addressbook, mid):
         structured_call = StructuredGroupCall.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group call data for message {mid}: {str(e)}"
+            f"Failed to load group call data for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
-        return []
+        return None
 
     timestamp = dt.datetime.fromtimestamp(structured_call.when // 1000)
     timestamp = timestamp.replace(
@@ -215,9 +217,10 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
         structured_group_data = StructuredGroupDataV1.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v1) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v1) for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
-        return []
+        return None
 
     members = dict()
     for member in structured_group_data.members:
@@ -295,9 +298,10 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
         structured_group_data = StructuredGroupDataV2.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v2) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v2) for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
-        return []
+        return None
 
     change = structured_group_data.change
     deleted_members = []
@@ -384,29 +388,30 @@ def get_data_from_body(_type, body, addressbook, mid):
 def get_mms_mentions(encoded_mentions, addressbook, mid):
     """Decode mentions encoded in a SQL blob."""
     mentions = {}
-    if encoded_mentions:
-        try:
-            structured_mentions = StructuredMentions.loads(encoded_mentions)
-        except (ValueError, IndexError, TypeError) as e:
-            logger.warn(
-                f"Failed to load quote mentions for message {mid}: {str(e)}"
-            )
-            return []
+    if not encoded_mentions:
+        return mentions
 
-        for structured_mention in structured_mentions.mentions:
-            recipient = addressbook.get_recipient_by_uuid(
-                structured_mention.who_uuid
-            )
-            name = recipient.name
-            mention = Mention(
-                mention_id=-1, name=name, length=structured_mention.length
-            )
-            range_start = (
-                0
-                if structured_mention.start is None
-                else structured_mention.start
-            )
-            mentions[range_start] = mention
+    try:
+        structured_mentions = StructuredMentions.loads(encoded_mentions)
+    except (ValueError, IndexError, TypeError) as e:
+        logger.warn(
+            f"Failed to load quote mentions for message {mid}:\n"
+            f"Error message: {str(e)}"
+        )
+        return mentions
+
+    for structured_mention in structured_mentions.mentions:
+        recipient = addressbook.get_recipient_by_uuid(
+            structured_mention.who_uuid
+        )
+        name = recipient.name
+        mention = Mention(
+            mention_id=-1, name=name, length=structured_mention.length
+        )
+        range_start = (
+            0 if structured_mention.start is None else structured_mention.start
+        )
+        mentions[range_start] = mention
 
     return mentions
 
@@ -414,36 +419,39 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
 def get_mms_reactions(encoded_reactions, addressbook, mid):
     """Decode reactions encoded in a SQL blob."""
     reactions = []
-    if encoded_reactions:
-        try:
-            structured_reactions = StructuredReactions.loads(encoded_reactions)
-        except (ValueError, IndexError, TypeError) as e:
-            logger.warn(
-                f"Failed to load reactions for message {mid}: {str(e)}"
-            )
-            return []
+    if not encoded_reactions:
+        return reactions
 
-        for structured_reaction in structured_reactions.reactions:
-            recipient = addressbook.get_recipient_by_address(
-                str(structured_reaction.who)
-            )
-            reaction = Reaction(
-                recipient=recipient,
-                what=structured_reaction.what,
-                time_sent=dt.datetime.fromtimestamp(
-                    structured_reaction.time_sent // 1000
-                ),
-                time_received=dt.datetime.fromtimestamp(
-                    structured_reaction.time_received // 1000
-                ),
-            )
-            reaction.time_sent = reaction.time_sent.replace(
-                microsecond=(structured_reaction.time_sent % 1000) * 1000
-            )
-            reaction.time_received = reaction.time_received.replace(
-                microsecond=(structured_reaction.time_received % 1000) * 1000
-            )
-            reactions.append(reaction)
+    try:
+        structured_reactions = StructuredReactions.loads(encoded_reactions)
+    except (ValueError, IndexError, TypeError) as e:
+        logger.warn(
+            f"Failed to load reactions for message {mid}:\n"
+            f"Error message: {str(e)}"
+        )
+        return reactions
+
+    for structured_reaction in structured_reactions.reactions:
+        recipient = addressbook.get_recipient_by_address(
+            str(structured_reaction.who)
+        )
+        reaction = Reaction(
+            recipient=recipient,
+            what=structured_reaction.what,
+            time_sent=dt.datetime.fromtimestamp(
+                structured_reaction.time_sent // 1000
+            ),
+            time_received=dt.datetime.fromtimestamp(
+                structured_reaction.time_received // 1000
+            ),
+        )
+        reaction.time_sent = reaction.time_sent.replace(
+            microsecond=(structured_reaction.time_sent % 1000) * 1000
+        )
+        reaction.time_received = reaction.time_received.replace(
+            microsecond=(structured_reaction.time_received % 1000) * 1000
+        )
+        reactions.append(reaction)
 
     return reactions
 
