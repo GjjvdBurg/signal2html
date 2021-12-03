@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.7
+
+* Code fixes for missing message data
+
 ## Version 0.2.6
 
 * Bugfix for handling mentions

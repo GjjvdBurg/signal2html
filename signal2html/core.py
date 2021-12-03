@@ -187,7 +187,8 @@ def get_group_call_data(
         structured_call = StructuredGroupCall.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group call data for message {mid}: {str(e)}"
+            f"Failed to load group call data for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
         return None
 
@@ -229,7 +230,8 @@ def get_group_update_data_v1(
         structured_group_data = StructuredGroupDataV1.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v1) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v1) for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
         return None
 
@@ -316,7 +318,8 @@ def get_group_update_data_v2(
         structured_group_data = StructuredGroupDataV2.loads(rawbody)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load group update data (v2) for message {mid}: {str(e)}"
+            f"Failed to load group update data (v2) for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
         return None
 
@@ -416,7 +419,8 @@ def get_mms_mentions(
         structured_mentions = StructuredMentions.loads(encoded_mentions)
     except (ValueError, IndexError, TypeError) as e:
         logger.warn(
-            f"Failed to load quote mentions for message {mid}: {str(e)}"
+            f"Failed to load quote mentions for message {mid}:\n"
+            f"Error message: {str(e)}"
         )
         return mentions
 
@@ -447,7 +451,10 @@ def get_mms_reactions(
     try:
         structured_reactions = StructuredReactions.loads(encoded_reactions)
     except (ValueError, IndexError, TypeError) as e:
-        logger.warn(f"Failed to load reactions for message {mid}: {str(e)}")
+        logger.warn(
+            f"Failed to load reactions for message {mid}:\n"
+            f"Error message: {str(e)}"
+        )
         return reactions
 
     for structured_reaction in structured_reactions.reactions:
