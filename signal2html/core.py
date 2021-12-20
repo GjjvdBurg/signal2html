@@ -61,7 +61,9 @@ def check_backup(backup_dir) -> VersionInfo:
     versioninfo = VersionInfo(version)
 
     if not versioninfo.is_tested_version():
-        logger.warn(f"Found untested Signal database version: {version}.")
+        logger.warn(
+            f"This database version is untested, please report errors."
+        )
     return versioninfo
 
 
