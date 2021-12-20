@@ -309,7 +309,7 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
     members = []
     change_by = None
     editor = None
-    if change.by:
+    if (not change is None) and (not change.by is None):
         editor = get_member_by_raw_uuid(
             change.by, "update editor", addressbook, mid
         )
