@@ -1,0 +1,4 @@
+from typing import Any
+
+EMOJI_UNICODE_PORTUGUESE: Any
+UNICODE_EMOJI_PORTUGUESE: Any
