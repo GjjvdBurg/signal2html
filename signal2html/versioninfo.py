@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class VersionInfo(object):
     def __init__(self, version):
         self.version = int(version)
-        logger.info(f"Using database version {version}.")
+        logger.info(f"Found Signal database version: {version}.")
 
     def is_tested_version(self) -> bool:
         """Returns whether the database version has been tested.
