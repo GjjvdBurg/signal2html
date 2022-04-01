@@ -323,28 +323,34 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
                 admin=False,
             )
 
-    for member in change.new_members:
-        name = (
-            get_member_by_raw_uuid(member.uuid, "new member", addressbook, mid)
-            or "Unknown"
-        )
-        admin = member.role == StructuredMemberRole.MEMBER_ROLE_ADMIN
-        new_members.append(
-            MemberInfo(
-                name=name, phone=None, match_from_phone=False, admin=admin
+    if (not change is None) and (not change.new_members is None):
+        for member in change.new_members:
+            name = (
+                get_member_by_raw_uuid(
+                    member.uuid, "new member", addressbook, mid
+                )
+                or "Unknown"
             )
-        )
+            admin = member.role == StructuredMemberRole.MEMBER_ROLE_ADMIN
+            new_members.append(
+                MemberInfo(
+                    name=name, phone=None, match_from_phone=False, admin=admin
+                )
+            )
 
-    for member in change.deleted_members:
-        name = (
-            get_member_by_raw_uuid(member, "deleted member", addressbook, mid)
-            or "Unknown"
-        )
-        deleted_members.append(
-            MemberInfo(
-                name=name, phone=None, match_from_phone=False, admin=False
+    if (not change is None) and (not change.deleted_members is None):
+        for member in change.deleted_members:
+            name = (
+                get_member_by_raw_uuid(
+                    member, "deleted member", addressbook, mid
+                )
+                or "Unknown"
             )
-        )
+            deleted_members.append(
+                MemberInfo(
+                    name=name, phone=None, match_from_phone=False, admin=False
+                )
+            )
 
     state = structured_group_data.state
     for member in state.members:
@@ -359,8 +365,13 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
             )
         )
 
+    if (change is None) or (change.new_title is None):
+        group_name = None
+    else:
+        group_name = change.new_title.value
+
     group_update_data = GroupUpdateData(
-        group_name=change.new_title.value if change.new_title else None,
+        group_name=group_name,
         change_by=change_by,
         members=members,
         new_members=new_members,
