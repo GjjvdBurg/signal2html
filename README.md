@@ -40,7 +40,7 @@ nice way.
 4. Unpack your encrypted backup using ``signalbackup-tools`` as follows:
    ```
    $ mkdir signal-backup/
-   $ signalbackup-tools --output signal_backup/ signal-YYYY-MM-DD-HH-MM-SS.backup <PASS>
+   $ signalbackup-tools signal-YYYY-MM-DD-HH-MM-SS.backup <PASS> --output signal_backup/
    ```
    where you replace ``signal-YYYY-MM-DD-HH-MM-SS.backup`` with the actual 
    filename of your Signal backup and ``<PASS>`` with the 30-digit encryption 
