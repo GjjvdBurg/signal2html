@@ -1,5 +1,15 @@
 # Changelog
 
+## Version 0.2.9
+
+* Fix bug in [#59](https://github.com/GjjvdBurg/signal2html/issues/59). Thanks 
+  to aweinberg38 for reporting this issue and providing a patch.
+
+## Version 0.2.8
+
+* Code fixes for group update messages (thanks to @prgarnett and @aweinberg38 
+  for reporting [#37](https://github.com/GjjvdBurg/signal2html/issues/57))
+
 ## Version 0.2.7
 
 * Code fixes for missing message data

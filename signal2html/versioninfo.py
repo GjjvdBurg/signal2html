@@ -6,8 +6,8 @@
 This file in the Signal source can be used to determine when features were 
 introduced:
 
-    https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/helpers/SQLCipherOpenHelper.java
-
+    https://github.com/signalapp/Signal-Android/blob/master/app/src/main/java/org/thoughtcrime/securesms/database/helpers/SignalDatabaseMigrations.kt
+    
 License: See LICENSE file.
 
 """
@@ -20,7 +20,7 @@ logger = logging.getLogger(__name__)
 class VersionInfo:
     def __init__(self, version: str):
         self.version = int(version)
-        logger.info(f"Using database version {version}.")
+        logger.info(f"Found Signal database version: {version}.")
 
     def is_tested_version(self) -> bool:
         """Returns whether the database version has been tested.
