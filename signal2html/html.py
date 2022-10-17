@@ -11,7 +11,7 @@ import logging
 
 from types import SimpleNamespace as ns
 
-from emoji import emoji_lis as emoji_list
+from emoji import emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape

@@ -19,7 +19,7 @@ VERSION = None
 
 # What packages are required for this module to be executed?
 REQUIRED = [
-    "emoji",
+    "emoji>=2.0",
     "jinja2",
     'dataclasses;python_version=="3.6"',
     "pure-protobuf",
