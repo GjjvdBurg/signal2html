@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.10
+
+* Bump version of dependency package [emoji](https://pypi.org/project/emoji)
+
 ## Version 0.2.9
 
 * Fix bug in [#59](https://github.com/GjjvdBurg/signal2html/issues/59). Thanks 
