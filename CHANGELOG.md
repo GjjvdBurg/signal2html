@@ -1,5 +1,9 @@
 # Changelog
 
+## Version 0.2.11
+
+* Better checking for database availability
+
 ## Version 0.2.10
 
 * Bump version of dependency package [emoji](https://pypi.org/project/emoji)
