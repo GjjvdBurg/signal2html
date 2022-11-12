@@ -15,7 +15,10 @@ import shutil
 import sqlite3
 import uuid
 
+from pathlib import Path
+
 from typing import List
+from typing import Tuple
 
 from .__version__ import __version__
 from .addressbook import Addressbook
@@ -26,8 +29,9 @@ from .dbproto import StructuredGroupDataV2
 from .dbproto import StructuredMemberRole
 from .dbproto import StructuredMentions
 from .dbproto import StructuredReactions
-from .exceptions import DatabaseNotFound
-from .exceptions import DatabaseVersionNotFound
+from .exceptions import DatabaseEmptyError
+from .exceptions import DatabaseNotFoundError
+from .exceptions import DatabaseVersionNotFoundError
 from .html import dump_thread
 from .models import Attachment
 from .models import GroupCallData
@@ -48,23 +52,23 @@ from .versioninfo import VersionInfo
 logger = logging.getLogger(__name__)
 
 
-def check_backup(backup_dir) -> VersionInfo:
+def check_backup(backup_dir: Path) -> Tuple[Path, VersionInfo]:
     """Check that we have the necessary files and return VersionInfo"""
-    if not os.path.join(backup_dir, "database.sqlite"):
-        raise DatabaseNotFound
-    if not os.path.join(backup_dir, "DatabaseVersion.sbf"):
-        raise DatabaseVersionNotFound
-    with open(os.path.join(backup_dir, "DatabaseVersion.sbf"), "r") as fp:
+    db_file = backup_dir / "database.sqlite"
+    if not db_file.exists():
+        raise DatabaseNotFoundError(db_file)
+    db_version_file = backup_dir / "DatabaseVersion.sbf"
+    if not db_version_file.exists():
+        raise DatabaseVersionNotFoundError(db_version_file)
+    with open(db_version_file, "r") as fp:
         version_str = fp.read()
 
     version = version_str.split(":")[-1].strip()
     versioninfo = VersionInfo(version)
 
     if not versioninfo.is_tested_version():
-        logger.warn(
-            f"This database version is untested, please report errors."
-        )
-    return versioninfo
+        logger.warn("This database version is untested, please report errors.")
+    return db_file, versioninfo
 
 
 def get_color(db, recipient_id):
@@ -659,16 +663,21 @@ def populate_thread(
     thread.members = get_members(db, addressbook, thread._id, versioninfo)
 
 
-def process_backup(backup_dir, output_dir):
+def process_backup(backup_dir: Path, output_dir: Path):
     """Main functionality to convert database into HTML"""
 
     logger.info(f"This is signal2html version {__version__}")
 
     # Verify backup and open database
-    versioninfo = check_backup(backup_dir)
-    db_file = os.path.join(backup_dir, "database.sqlite")
+    db_file, versioninfo = check_backup(backup_dir)
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
+
+    # Check if database is empty
+    qry = db.execute("SELECT COUNT(*) FROM sqlite_schema")
+    record = qry.fetchone()
+    if record == (0,):
+        raise DatabaseEmptyError()
 
     # Get and index all contact and group names
     addressbook = make_addressbook(db, versioninfo)
