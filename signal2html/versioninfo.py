@@ -61,3 +61,8 @@ class VersionInfo(object):
         return (
             "thread_recipient_id" if self.version >= 108 else "recipient_ids"
         )
+
+    def get_reactions_query_column(self) -> str:
+        """Returns a SQL expression to retrieve reactions to MMS messages."""
+
+        return "reactions_unread" if self.version >= 140 else "''"
