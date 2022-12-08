@@ -56,7 +56,7 @@ def format_message(body, mentions=None):
 
     emoji_pos = emoji_list(body)
     new_body = ""
-    emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
+    emoji_lookup = {p["match_start"]: p["emoji"] for p in emoji_pos}
     skip = 0
     for i, c in enumerate(body):
         if skip > 0:
