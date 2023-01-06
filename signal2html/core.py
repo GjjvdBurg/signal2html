@@ -14,6 +14,7 @@ import os
 import shutil
 import sqlite3
 import uuid
+import random
 
 from pathlib import Path
 
@@ -81,11 +82,15 @@ def get_color(db, recipient_id):
     return color
 
 
-def get_sms_records(db, thread, addressbook):
+def get_sms_records(db, thread, addressbook, versioninfo):
     """Collect all the SMS records for a given thread"""
     sms_records = []
+
+    recipient_expr = versioninfo.get_recipient_query_column()
+    date_received_expr = versioninfo.get_date_received_query_column()
+
     sms_qry = db.execute(
-        "SELECT _id, address, date, date_sent, body, type, "
+        f"SELECT _id, {recipient_expr}, {date_received_expr}, date_sent, body, type, "
         "delivery_receipt_count, read_receipt_count "
         "FROM sms WHERE thread_id=?",
         (thread._id,),
@@ -233,7 +238,7 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
         name = None
         match_from_phone = False
         if member.uuid:
-            name = addressbook.get_recipient_by_uuid(member.uuid).name
+            name = name = str(random.randint(1,100000))
         elif member.phone:
             name = addressbook.get_recipient_by_phone(member.phone).name
             match_from_phone = True
@@ -482,10 +487,13 @@ def get_mms_records(
     reaction_expr = versioninfo.get_reactions_query_column()
     quote_mentions_expr = versioninfo.get_quote_mentions_query_column()
     viewed_receipt_count_expr = versioninfo.get_viewed_receipt_count_column()
+    recipient_expr = versioninfo.get_recipient_query_column()
+    date_sent_expr = versioninfo.get_date_sent_query_column()
+    type_expr = versioninfo.get_type_query_column()
 
     qry = db.execute(
-        "SELECT _id, address, date, date_received, body, quote_id, "
-        f"quote_author, quote_body, {quote_mentions_expr}, msg_box, {reaction_expr}, "
+        f"SELECT _id, {recipient_expr}, {date_sent_expr}, date_received, body, quote_id, "
+        f"quote_author, quote_body, {quote_mentions_expr}, {type_expr}, {reaction_expr}, "
         f"delivery_receipt_count, read_receipt_count, {viewed_receipt_count_expr} "
         "FROM mms WHERE thread_id=?",
         (thread._id,),
@@ -648,7 +656,7 @@ def populate_thread(
     db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
 ):
     """Populate a thread with all corresponding messages"""
-    sms_records = get_sms_records(db, thread, addressbook)
+    sms_records = get_sms_records(db, thread, addressbook, versioninfo)
     mms_records = get_mms_records(
         db,
         thread,
