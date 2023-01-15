@@ -682,7 +682,7 @@ def process_backup(backup_dir: Path, output_dir: Path):
     db = db_conn.cursor()
 
     # Check if database is empty
-    qry = db.execute("SELECT COUNT(*) FROM sqlite_schema")
+    qry = db.execute("SELECT COUNT(*) FROM sqlite_sequence")
     record = qry.fetchone()
     if record == (0,):
         raise DatabaseEmptyError()
