@@ -40,7 +40,7 @@ class VersionInfo(object):
     def get_reactions_query_column(self) -> str:
         """Returns a SQL expression to retrieve reactions to MMS messages."""
 
-        return "reactions" if self.version >= 37 else "''"
+        return "reactions" if self.version >= 37 and self.version < 167 else "''"
 
     def are_mentions_supported(self) -> bool:
         """Returns whether the mentions table is present."""
@@ -56,8 +56,28 @@ class VersionInfo(object):
 
         return "viewed_receipt_count" if self.version >= 83 else "'0'"
 
+    def get_recipient_query_column(self) -> str:
+        """Returns a SQL expression to retrieve the recipient of SMS messages."""
+
+        return "recipient_id" if self.version >= 167 else "address"
+
+    def get_date_received_query_column(self) -> str:
+        """Returns a SQL expression to retrieve the date of receipt for SMS messages."""
+
+        return "date_received" if self.version >= 167 else "date"
+
+    def get_date_sent_query_column(self) -> str:
+        """Returns a SQL expression to retrieve the date of dispatch for MMS messages."""
+
+        return "date_sent" if self.version >= 167 else "date"
+
+    def get_type_query_column(self) -> str:
+        """Returns a SQL expression to retrieve the type/msg_box for MMS messages."""
+
+        return "type" if self.version >= 167 else "msg_box"
+
     def get_thread_recipient_id_column(self) -> str:
         """Returns SQL expression to retrieve recipient id from thread table"""
         return (
-            "thread_recipient_id" if self.version >= 108 else "recipient_ids"
+            "recipient_id" if self.version >= 167 else "thread_recipient_id" if self.version >= 108 else "recipient_ids"
         )
