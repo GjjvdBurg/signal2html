@@ -14,6 +14,7 @@ import os
 import shutil
 import sqlite3
 import uuid
+import filetype
 
 from pathlib import Path
 
@@ -131,12 +132,19 @@ def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
         )
         return None
 
+    filetype_kind = filetype.guess(source)
+    if filetype_kind is None:
+        new_fname = fname
+    else:
+        extension = filetype_kind.extension
+        new_fname =f"Attachment_{_id}_{unique_id}.{extension}"
+
     # Copying here is a bit of a side-effect
     target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
     os.makedirs(target_dir, exist_ok=True)
-    target = os.path.join(target_dir, fname)
+    target = os.path.join(target_dir, new_fname)
     shutil.copy(source, target)
-    url = "/".join([".", "attachments", fname])
+    url = "/".join([".", "attachments", new_fname])
     return url
 
 
