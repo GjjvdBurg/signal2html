@@ -33,6 +33,9 @@ jobs:
 
       - name: Run code quality tests (black)
         uses: psf/black@stable
+        with:
+          # keep in sync with .pre-commit-config.yaml
+          version: "23.1.0"
 
       - name: Run code quality tests (isort)
         uses: jamescurtin/isort-action@master

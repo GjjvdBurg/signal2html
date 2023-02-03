@@ -7,7 +7,6 @@ from signal2html.linkify import linkify
 
 
 class TestLinkify(unittest.TestCase):
-
     _CASES = [
         (
             "Lorem ipsum www.example.com dolor sit amet",
@@ -37,7 +36,7 @@ class TestLinkify(unittest.TestCase):
     ]
 
     def test_linkify(self):
-        for (message, expected) in self._CASES:
+        for message, expected in self._CASES:
             with self.subTest(message=message):
                 self.assertEqual(expected, linkify(message))
 

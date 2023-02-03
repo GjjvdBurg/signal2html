@@ -203,7 +203,6 @@ def dump_thread(thread: Thread, output_dir: str):
     prev_date = None
     simple_messages = []
     for msg in messages:
-
         if is_joined_type(msg._type):
             continue
 

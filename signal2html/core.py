@@ -101,7 +101,6 @@ def get_sms_records(db, thread, addressbook):
         delivery_receipt_count,
         read_receipt_count,
     ) in qry_res:
-
         data = get_data_from_body(_type, body, addressbook, _id)
         sms_auth = addressbook.get_recipient_by_address(str(address))
         sms = SMSMessageRecord(
@@ -689,7 +688,7 @@ def process_backup(backup_dir: Path, output_dir: Path):
     threads = query.fetchall()
 
     # Combine the recipient objects and the thread info into Thread objects
-    for (_id, recipient_id) in threads:
+    for _id, recipient_id in threads:
         recipient = addressbook.get_recipient_by_address(str(recipient_id))
         if recipient is None:
             logger.warn(f"No recipient with address {recipient_id}")
