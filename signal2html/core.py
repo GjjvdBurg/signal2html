@@ -10,7 +10,6 @@ import base64
 import binascii
 import datetime as dt
 import logging
-import os
 import shutil
 import sqlite3
 import uuid
@@ -128,12 +127,13 @@ def get_sms_records(
 
 
 def get_attachment_filename(
-    _id: str, unique_id: str, backup_dir: str, thread_dir: str
+    _id: str, unique_id: str, backup_dir: Path, thread_dir: Path
 ) -> str:
     """Get the absolute path of an attachment, warn if it doesn't exist"""
     fname = f"Attachment_{_id}_{unique_id}.bin"
-    source = os.path.abspath(os.path.join(backup_dir, fname))
-    if not os.path.exists(source):
+    source = backup_dir / fname
+    source = source.resolve()
+    if not source.exists():
         logger.warn(
             f"Couldn't find attachment '{source}'. "
             "Maybe it was deleted or never downloaded?"
@@ -148,16 +148,20 @@ def get_attachment_filename(
         new_fname = f"Attachment_{_id}_{unique_id}.{extension}"
 
     # Copying here is a bit of a side-effect
-    target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
-    os.makedirs(target_dir, exist_ok=True)
-    target = os.path.join(target_dir, new_fname)
+    target_dir = thread_dir / "attachments"
+    target_dir = target_dir.resolve()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / new_fname
     shutil.copy(source, target)
     url = "/".join([".", "attachments", new_fname])
     return url
 
 
 def add_mms_attachments(
-    db: sqlite3.Cursor, mms: MMSMessageRecord, backup_dir: str, thread_dir: str
+    db: sqlite3.Cursor,
+    mms: MMSMessageRecord,
+    backup_dir: Path,
+    thread_dir: Path,
 ) -> None:
     """Add all attachment objects to MMS message"""
     qry = db.execute(
@@ -511,8 +515,8 @@ def get_mms_records(
     db: sqlite3.Cursor,
     thread: Thread,
     addressbook: Addressbook,
-    backup_dir: str,
-    thread_dir: str,
+    backup_dir: Path,
+    thread_dir: Path,
     versioninfo: VersionInfo,
 ) -> List[MMSMessageRecord]:
     """Collect all MMS records for a given thread"""
@@ -699,8 +703,8 @@ def populate_thread(
     db: sqlite3.Cursor,
     thread: Thread,
     addressbook: Addressbook,
-    backup_dir: str,
-    thread_dir: str,
+    backup_dir: Path,
+    thread_dir: Path,
     versioninfo: VersionInfo,
 ):
     """Populate a thread with all corresponding messages"""

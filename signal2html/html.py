@@ -9,6 +9,7 @@ License: See LICENSE file.
 import datetime as dt
 import logging
 
+from pathlib import Path
 from types import SimpleNamespace as ns
 
 from typing import Any
@@ -158,7 +159,7 @@ def format_event_data_group_update(data):
     return event_data
 
 
-def dump_thread(thread: Thread, output_dir: str):
+def dump_thread(thread: Thread, output_dir: Path):
     """Write a Thread instance to a HTML page in the output directory"""
 
     # Combine and sort the messages
