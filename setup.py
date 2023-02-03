@@ -24,6 +24,7 @@ REQUIRED = [
     'dataclasses;python_version=="3.6"',
     "pure-protobuf",
     "linkify-it-py",
+    "filetype"
 ]
 
 docs_require = []
