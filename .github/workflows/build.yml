@@ -10,14 +10,14 @@ on:
 
 jobs:
   python:
-    name: Testing signal2html
+    name: Tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # Can add others if deemed necessary
         os: [ 'ubuntu-latest' ]
         # minimal and latest
-        py: [ '3.6', '3.9' ]
+        py: [ '3.7', '3.11' ]
 
     steps:
       - name: Install Python ${{ matrix.py }}
