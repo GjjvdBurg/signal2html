@@ -115,7 +115,7 @@ class Reaction:
 
 @dataclass
 class MMSMessageRecord(MessageRecord):
-    quote: Quote
+    quote: Optional[Quote]
     attachments: List[Attachment]
     reactions: List[Reaction]
     viewed_receipt_count: int

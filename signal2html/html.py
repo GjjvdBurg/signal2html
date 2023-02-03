@@ -137,7 +137,9 @@ def format_event_data_group_update(data):
 
     event_data.header = "Group update"
     if data.change_by:
-        event_data.header += " by " + format_message(data.change_by.name)
+        formatted_name = format_message(data.change_by.name)
+        if formatted_name is not None:
+            event_data.header += f" by {formatted_name}"
 
     if data.group_name:
         event_data.name = data.group_name
@@ -216,6 +218,7 @@ def dump_thread(thread: Thread, output_dir: Path):
     # Create a simplified dict for each message
     prev_date = None
     simple_messages = []
+    out: Dict[str, Any] = {}
     for msg in messages:
         if is_joined_type(msg._type):
             continue
@@ -259,7 +262,7 @@ def dump_thread(thread: Thread, output_dir: Path):
 
         # Deal with quoted messages
         quote: Dict[str, Any] = {}
-        if isinstance(msg, MMSMessageRecord) and msg.quote:
+        if isinstance(msg, MMSMessageRecord) and msg.quote is not None:
             quote_author_id = msg.quote.author.rid
             quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
@@ -320,11 +323,19 @@ def dump_thread(thread: Thread, output_dir: Path):
         if isinstance(msg, MMSMessageRecord):
             for a in msg.attachments:
                 if a.quote:
+                    # TODO: ugly, rework this
+                    assert isinstance(out["quote"], dict)
+                    assert "attachments" in out["quote"]
+                    assert isinstance(out["quote"]["attachments"], list)
                     out["quote"]["attachments"].append(a)
                 else:
+                    # TODO: ugly, rework this
+                    assert isinstance(out["attachments"], list)
                     out["attachments"].append(a)
 
             for r in msg.reactions:
+                # TODO: ugly, rework this
+                assert isinstance(out["reactions"], list)
                 out["reactions"].append(
                     {
                         "recipient_id": r.recipient.rid,
