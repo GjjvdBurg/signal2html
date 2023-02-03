@@ -10,6 +10,7 @@ import abc
 import logging
 import sqlite3
 
+from typing import Dict
 from typing import Optional
 
 from .html_colors import get_random_color
@@ -28,10 +29,10 @@ class Addressbook(metaclass=abc.ABCMeta):
         """Initializes the addressbook and load all known recipients."""
         self.logger = logging.getLogger(__name__)
         self.db = db
-        self.rid_to_recipient: dict[str, Recipient] = {}
-        self.phone_to_rid: dict[str, str] = {}
-        self.uuid_to_rid: dict[str, str] = {}
-        self.groups: dict[int, str] = {}
+        self.rid_to_recipient: Dict[str, Recipient] = {}
+        self.phone_to_rid: Dict[str, str] = {}
+        self.uuid_to_rid: Dict[str, str] = {}
+        self.groups: Dict[int, str] = {}
 
         self._load_groups()
         self._load_recipients()  # Must be implemented by subclass
