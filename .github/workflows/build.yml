@@ -10,14 +10,14 @@ on:
 
 jobs:
   python:
-    name: Testing signal2html
+    name: Tests
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         # Can add others if deemed necessary
         os: [ 'ubuntu-latest' ]
         # minimal and latest
-        py: [ '3.6', '3.9' ]
+        py: [ '3.7', '3.11' ]
 
     steps:
       - name: Install Python ${{ matrix.py }}
@@ -33,6 +33,9 @@ jobs:
 
       - name: Run code quality tests (black)
         uses: psf/black@stable
+        with:
+          # keep in sync with .pre-commit-config.yaml
+          version: "23.1.0"
 
       - name: Run code quality tests (isort)
         uses: jamescurtin/isort-action@master
