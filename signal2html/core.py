@@ -15,10 +15,15 @@ import shutil
 import sqlite3
 import uuid
 
+from pathlib import Path
+
 from typing import Dict
 from typing import List
 from typing import Optional
+from typing import Tuple
 from typing import Union
+
+import filetype
 
 from .__version__ import __version__
 from .addressbook import Addressbook
@@ -29,8 +34,9 @@ from .dbproto import StructuredGroupDataV2
 from .dbproto import StructuredMemberRole
 from .dbproto import StructuredMentions
 from .dbproto import StructuredReactions
-from .exceptions import DatabaseNotFound
-from .exceptions import DatabaseVersionNotFound
+from .exceptions import DatabaseEmptyError
+from .exceptions import DatabaseNotFoundError
+from .exceptions import DatabaseVersionNotFoundError
 from .html import dump_thread
 from .models import Attachment
 from .models import GroupCallData
@@ -51,23 +57,23 @@ from .versioninfo import VersionInfo
 logger = logging.getLogger(__name__)
 
 
-def check_backup(backup_dir: str) -> VersionInfo:
+def check_backup(backup_dir: Path) -> Tuple[Path, VersionInfo]:
     """Check that we have the necessary files and return VersionInfo"""
-    if not os.path.join(backup_dir, "database.sqlite"):
-        raise DatabaseNotFound
-    if not os.path.join(backup_dir, "DatabaseVersion.sbf"):
-        raise DatabaseVersionNotFound
-    with open(os.path.join(backup_dir, "DatabaseVersion.sbf"), "r") as fp:
+    db_file = backup_dir / "database.sqlite"
+    if not db_file.exists():
+        raise DatabaseNotFoundError(db_file)
+    db_version_file = backup_dir / "DatabaseVersion.sbf"
+    if not db_version_file.exists():
+        raise DatabaseVersionNotFoundError(db_version_file)
+    with open(db_version_file, "r") as fp:
         version_str = fp.read()
 
     version = version_str.split(":")[-1].strip()
     versioninfo = VersionInfo(version)
 
     if not versioninfo.is_tested_version():
-        logger.warn(
-            f"This database version is untested, please report errors."
-        )
-    return versioninfo
+        logger.warn("This database version is untested, please report errors.")
+    return db_file, versioninfo
 
 
 def get_color(db: sqlite3.Cursor, recipient_id):
@@ -102,7 +108,6 @@ def get_sms_records(
         delivery_receipt_count,
         read_receipt_count,
     ) in qry_res:
-
         data = get_data_from_body(_type, body, addressbook, _id)
         sms_auth = addressbook.get_recipient_by_address(str(address))
         sms = SMSMessageRecord(
@@ -135,12 +140,19 @@ def get_attachment_filename(
         )
         return "__MISSING__"
 
+    filetype_kind = filetype.guess(source)
+    if filetype_kind is None:
+        new_fname = fname
+    else:
+        extension = filetype_kind.extension
+        new_fname = f"Attachment_{_id}_{unique_id}.{extension}"
+
     # Copying here is a bit of a side-effect
     target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
     os.makedirs(target_dir, exist_ok=True)
-    target = os.path.join(target_dir, fname)
+    target = os.path.join(target_dir, new_fname)
     shutil.copy(source, target)
-    url = "/".join([".", "attachments", fname])
+    url = "/".join([".", "attachments", new_fname])
     return url
 
 
@@ -707,16 +719,21 @@ def populate_thread(
     thread.members = get_members(db, addressbook, thread._id, versioninfo)
 
 
-def process_backup(backup_dir: str, output_dir: str):
+def process_backup(backup_dir: Path, output_dir: Path):
     """Main functionality to convert database into HTML"""
 
     logger.info(f"This is signal2html version {__version__}")
 
     # Verify backup and open database
-    versioninfo = check_backup(backup_dir)
-    db_file = os.path.join(backup_dir, "database.sqlite")
+    db_file, versioninfo = check_backup(backup_dir)
     db_conn = sqlite3.connect(db_file)
     db = db_conn.cursor()
+
+    # Check if database is empty
+    qry = db.execute("SELECT COUNT(*) FROM sqlite_schema")
+    record = qry.fetchone()
+    if record == (0,):
+        raise DatabaseEmptyError()
 
     # Get and index all contact and group names
     addressbook = make_addressbook(db, versioninfo)
@@ -728,7 +745,7 @@ def process_backup(backup_dir: str, output_dir: str):
     threads = query.fetchall()
 
     # Combine the recipient objects and the thread info into Thread objects
-    for (_id, recipient_id) in threads:
+    for _id, recipient_id in threads:
         recipient = addressbook.get_recipient_by_address(str(recipient_id))
         if recipient is None:
             logger.warn(f"No recipient with address {recipient_id}")

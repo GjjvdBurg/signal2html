@@ -7,9 +7,17 @@ License: See LICENSE file.
 """
 
 
-class DatabaseNotFound(Exception):
+class DatabaseNotFoundError(FileNotFoundError):
     pass
 
 
-class DatabaseVersionNotFound(Exception):
+class DatabaseVersionNotFoundError(FileNotFoundError):
     pass
+
+
+class DatabaseEmptyError(ValueError):
+    def __init__(self):
+        super().__init__(
+            "Database is empty, something must have gone wrong exporting or "
+            "unpacking the Signal backup."
+        )

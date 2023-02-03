@@ -8,6 +8,8 @@ License: See LICENSE file.
 
 import argparse
 
+from pathlib import Path
+
 from . import __version__
 from .core import process_backup
 
@@ -15,10 +17,10 @@ from .core import process_backup
 def parse_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "-i", "--input-dir", help="Input directory", required=True
+        "-i", "--input-dir", help="Input directory", required=True, type=Path
     )
     parser.add_argument(
-        "-o", "--output-dir", help="Output directory", required=True
+        "-o", "--output-dir", help="Output directory", required=True, type=Path
     )
     parser.add_argument(
         "-V",

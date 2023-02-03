@@ -15,7 +15,7 @@ from typing import Any
 from typing import Dict
 from typing import Optional
 
-from emoji import emoji_lis as emoji_list
+from emoji import emoji_list
 from jinja2 import Environment
 from jinja2 import PackageLoader
 from jinja2 import select_autoescape
@@ -63,7 +63,7 @@ def format_message(
 
     emoji_pos = emoji_list(body)
     new_body = ""
-    emoji_lookup = {p["location"]: p["emoji"] for p in emoji_pos}
+    emoji_lookup = {p["match_start"]: p["emoji"] for p in emoji_pos}
     skip = 0
     for i, c in enumerate(body):
         if skip > 0:
@@ -216,7 +216,6 @@ def dump_thread(thread: Thread, output_dir: str):
     prev_date = None
     simple_messages = []
     for msg in messages:
-
         if is_joined_type(msg._type):
             continue
 

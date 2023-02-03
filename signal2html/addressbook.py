@@ -300,7 +300,8 @@ class AddressbookV2(Addressbook):
 def make_addressbook(db, versioninfo) -> Addressbook:
     """Factory function for Addressbook.
 
-    The returned implementation depends on the structure of the Signal database."""
+    The returned implementation depends on the structure of the Signal database.
+    """
     if versioninfo.is_addressbook_using_rids():
         return AddressbookV2(db)
     return AddressbookV1(db)
