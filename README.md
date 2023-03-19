@@ -11,6 +11,10 @@ messages to pretty HTML:
   <img width="60%" src="https://raw.githubusercontent.com/GjjvdBurg/signal2html/ea182b6ffc2a08da19f999016d5d47cd714ce17e/screenshot.png">
 </p>
 
+***Update March 2023:** This package isn't much maintained at the moment,
+please use the `export` functionality of signalbackup-tools directly:
+https://github.com/bepaald/signalbackup-tools#export*
+
 ## Why?
 
 My phone was getting full and I wanted to preserve my Signal messages in a 
@@ -51,7 +55,10 @@ nice way.
    $ signal2html -i signal_backup/ -o signal_html/
    ```
    This will create a HTML page for each of the message threads in the 
-   ``signal_html`` directory, which you can subsequently open in your browser. 
+   ``signal_html`` directory, which you can subsequently open in your browser.
+   ***Update March 2023:** This package isn't much maintained at the moment, 
+   please use the `export` functionality of signalbackup-tools directly: 
+   https://github.com/bepaald/signalbackup-tools#export*
 
 ## Notes
 
