@@ -89,30 +89,30 @@ class DisplayType(Enum):
         return cls.DISPLAY_TYPE_NONE
 
 
-def is_outgoing_message_type(_type):
+def is_outgoing_message_type(_type: int) -> bool:
     for outgoingType in OUTGOING_MESSAGE_TYPES:
         if _type & BASE_TYPE_MASK == outgoingType:
             return True
     return False
 
 
-def is_inbox_type(_type):
+def is_inbox_type(_type: int) -> bool:
     return _type & BASE_TYPE_MASK == BASE_INBOX_TYPE
 
 
-def is_incoming_call(_type):
+def is_incoming_call(_type: int) -> bool:
     return _type in (INCOMING_AUDIO_CALL_TYPE, INCOMING_VIDEO_CALL_TYPE)
 
 
-def is_outgoing_call(_type):
+def is_outgoing_call(_type: int) -> bool:
     return _type in (OUTGOING_AUDIO_CALL_TYPE, OUTGOING_VIDEO_CALL_TYPE)
 
 
-def is_missed_call(_type):
+def is_missed_call(_type: int) -> bool:
     return _type in (MISSED_AUDIO_CALL_TYPE, MISSED_VIDEO_CALL_TYPE)
 
 
-def is_video_call(_type):
+def is_video_call(_type: int) -> bool:
     return _type in (
         INCOMING_VIDEO_CALL_TYPE,
         OUTGOING_VIDEO_CALL_TYPE,
@@ -120,31 +120,31 @@ def is_video_call(_type):
     )
 
 
-def is_group_call(_type):
+def is_group_call(_type: int) -> bool:
     return _type == GROUP_CALL_TYPE
 
 
-def is_key_update(_type):
+def is_key_update(_type: int) -> bool:
     return _type & KEY_UPDATE_TYPE_BIT == KEY_UPDATE_TYPE_BIT
 
 
-def is_secure(_type):
+def is_secure(_type: int) -> bool:
     return _type & SECURE_BIT == SECURE_BIT
 
 
-def is_group_ctrl(_type):
+def is_group_ctrl(_type: int) -> bool:
     return _type & GROUP_CTRL_TYPE_BIT == GROUP_CTRL_TYPE_BIT
 
 
-def is_group_v2_data(_type):
+def is_group_v2_data(_type: int) -> bool:
     return _type & GROUP_V2_DATA_TYPE_BIT == GROUP_V2_DATA_TYPE_BIT
 
 
-def is_joined_type(_type):
+def is_joined_type(_type: int) -> bool:
     return _type & BASE_TYPE_MASK == JOINED_TYPE
 
 
-def get_named_message_type(_type):
+def get_named_message_type(_type: int) -> str:
     if is_group_ctrl(_type):
         if is_group_v2_data(_type):
             return "group-update-v2"

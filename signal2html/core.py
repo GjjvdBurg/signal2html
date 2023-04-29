@@ -10,16 +10,19 @@ import base64
 import binascii
 import datetime as dt
 import logging
-import os
 import shutil
 import sqlite3
 import uuid
-import filetype
 
 from pathlib import Path
 
+from typing import Dict
 from typing import List
+from typing import Optional
 from typing import Tuple
+from typing import Union
+
+import filetype
 
 from .__version__ import __version__
 from .addressbook import Addressbook
@@ -72,7 +75,7 @@ def check_backup(backup_dir: Path) -> Tuple[Path, VersionInfo]:
     return db_file, versioninfo
 
 
-def get_color(db, recipient_id):
+def get_color(db: sqlite3.Cursor, recipient_id):
     """Extract recipient color from the database"""
     query = db.execute(
         "SELECT color FROM recipient_preferences WHERE recipient_ids=?",
@@ -82,7 +85,9 @@ def get_color(db, recipient_id):
     return color
 
 
-def get_sms_records(db, thread, addressbook):
+def get_sms_records(
+    db: sqlite3.Cursor, thread: Thread, addressbook: Addressbook
+) -> List[SMSMessageRecord]:
     """Collect all the SMS records for a given thread"""
     sms_records = []
     sms_qry = db.execute(
@@ -121,34 +126,43 @@ def get_sms_records(db, thread, addressbook):
     return sms_records
 
 
-def get_attachment_filename(_id, unique_id, backup_dir, thread_dir):
+def get_attachment_filename(
+    _id: str, unique_id: str, backup_dir: Path, thread_dir: Path
+) -> str:
     """Get the absolute path of an attachment, warn if it doesn't exist"""
     fname = f"Attachment_{_id}_{unique_id}.bin"
-    source = os.path.abspath(os.path.join(backup_dir, fname))
-    if not os.path.exists(source):
+    source = backup_dir / fname
+    source = source.resolve()
+    if not source.exists():
         logger.warn(
             f"Couldn't find attachment '{source}'. "
             "Maybe it was deleted or never downloaded?"
         )
-        return None
+        return "__MISSING__"
 
     filetype_kind = filetype.guess(source)
     if filetype_kind is None:
         new_fname = fname
     else:
         extension = filetype_kind.extension
-        new_fname =f"Attachment_{_id}_{unique_id}.{extension}"
+        new_fname = f"Attachment_{_id}_{unique_id}.{extension}"
 
     # Copying here is a bit of a side-effect
-    target_dir = os.path.abspath(os.path.join(thread_dir, "attachments"))
-    os.makedirs(target_dir, exist_ok=True)
-    target = os.path.join(target_dir, new_fname)
+    target_dir = thread_dir / "attachments"
+    target_dir = target_dir.resolve()
+    target_dir.mkdir(parents=True, exist_ok=True)
+    target = target_dir / new_fname
     shutil.copy(source, target)
     url = "/".join([".", "attachments", new_fname])
     return url
 
 
-def add_mms_attachments(db, mms, backup_dir, thread_dir):
+def add_mms_attachments(
+    db: sqlite3.Cursor,
+    mms: MMSMessageRecord,
+    backup_dir: Path,
+    thread_dir: Path,
+) -> None:
     """Add all attachment objects to MMS message"""
     qry = db.execute(
         "SELECT _id, ct, unique_id, voice_note, width, height, quote "
@@ -170,16 +184,18 @@ def add_mms_attachments(db, mms, backup_dir, thread_dir):
         mms.attachments.append(a)
 
 
-def decode_body(body):
+def decode_body(body: Union[str, bytes]) -> Optional[bytes]:
     """Decode a base64-encoded message body."""
     try:
         return base64.b64decode(body)
     except (TypeError, ValueError, binascii.Error) as e:
-        logger.warn(f"Failed to decode body for message '{body}': {str(e)}")
+        logger.warn(f"Failed to decode body for message '{body!r}': {str(e)}")
         return None
 
 
-def get_group_call_data(rawbody, addressbook, mid):
+def get_group_call_data(
+    rawbody: bytes, addressbook: Addressbook, mid: int
+) -> Optional[GroupCallData]:
     """Get the data for a group call."""
 
     if not rawbody:
@@ -210,7 +226,9 @@ def get_group_call_data(rawbody, addressbook, mid):
     return group_call_data
 
 
-def get_group_update_data_v1(rawbody, addressbook, mid):
+def get_group_update_data_v1(
+    rawbody: Optional[bytes], addressbook: Addressbook, mid: int
+) -> Optional[GroupUpdateData]:
     """Get the data for a Group V1 update.
 
     There are two lists of members:
@@ -240,9 +258,11 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
         name = None
         match_from_phone = False
         if member.uuid:
-            name = addressbook.get_recipient_by_uuid(member.uuid).name
+            recip = addressbook.get_recipient_by_uuid(member.uuid)
+            name = None if recip is None else recip.name
         elif member.phone:
-            name = addressbook.get_recipient_by_phone(member.phone).name
+            recip = addressbook.get_recipient_by_phone(member.phone)
+            name = None if recip is None else recip.name
             match_from_phone = True
 
         member_info = MemberInfo(
@@ -255,7 +275,8 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
 
     for phone_member in structured_group_data.phone_members:
         if not members.get(phone_member):
-            name = addressbook.get_recipient_by_phone(phone_member).name
+            recip = addressbook.get_recipient_by_phone(phone_member)
+            name = None if recip is None else recip.name
             member_info = MemberInfo(
                 name=name,
                 phone=phone_member,
@@ -276,7 +297,9 @@ def get_group_update_data_v1(rawbody, addressbook, mid):
     return group_update_data
 
 
-def get_member_by_raw_uuid(raw_uuid: bytes, what: str, addressbook, mid: str):
+def get_member_by_raw_uuid(
+    raw_uuid: bytes, what: str, addressbook: Addressbook, mid: str
+) -> Optional[str]:
     """Find a recipient from a binary UUID. Output their name from the
     addressbook or the textual UUID if not found."""
 
@@ -291,7 +314,9 @@ def get_member_by_raw_uuid(raw_uuid: bytes, what: str, addressbook, mid: str):
     return member_name
 
 
-def get_group_update_data_v2(rawbody, addressbook, mid):
+def get_group_update_data_v2(
+    rawbody: Optional[bytes], addressbook: Addressbook, mid: int
+) -> Optional[GroupUpdateData]:
     """Get the data for a Group V2 update.
 
     Group V2 updates use UUIDs exclusively to identify members. The update
@@ -391,7 +416,9 @@ def get_group_update_data_v2(rawbody, addressbook, mid):
     return group_update_data
 
 
-def get_data_from_body(_type, body, addressbook, mid):
+def get_data_from_body(
+    _type, body: Union[bytes, str], addressbook: Addressbook, mid: int
+) -> Optional[Union[GroupCallData, GroupUpdateData]]:
     """Decode data in the message body and provide a structured representation."""
     data = None
     if is_group_call(_type):
@@ -409,9 +436,11 @@ def get_data_from_body(_type, body, addressbook, mid):
     return data
 
 
-def get_mms_mentions(encoded_mentions, addressbook, mid):
+def get_mms_mentions(
+    encoded_mentions: bytes, addressbook: Addressbook, mid: int
+) -> Dict[int, Mention]:
     """Decode mentions encoded in a SQL blob."""
-    mentions = {}
+    mentions: Dict[int, Mention] = {}
     if not encoded_mentions:
         return mentions
 
@@ -440,9 +469,11 @@ def get_mms_mentions(encoded_mentions, addressbook, mid):
     return mentions
 
 
-def get_mms_reactions(encoded_reactions, addressbook, mid):
+def get_mms_reactions(
+    encoded_reactions: bytes, addressbook: Addressbook, mid: int
+) -> List[Reaction]:
     """Decode reactions encoded in a SQL blob."""
-    reactions = []
+    reactions: List[Reaction] = []
     if not encoded_reactions:
         return reactions
 
@@ -481,8 +512,13 @@ def get_mms_reactions(encoded_reactions, addressbook, mid):
 
 
 def get_mms_records(
-    db, thread, addressbook, backup_dir, thread_dir, versioninfo
-):
+    db: sqlite3.Cursor,
+    thread: Thread,
+    addressbook: Addressbook,
+    backup_dir: Path,
+    thread_dir: Path,
+    versioninfo: VersionInfo,
+) -> List[MMSMessageRecord]:
     """Collect all MMS records for a given thread"""
     mms_records = []
 
@@ -553,8 +589,13 @@ def get_mms_records(
 
 
 def get_mms_quote(
-    addressbook, quote_id, quote_author, quote_body, quote_mentions, mid
-):
+    addressbook: Addressbook,
+    quote_id: int,
+    quote_author: str,
+    quote_body: str,
+    quote_mentions: bytes,
+    mid: int,
+) -> Optional[Quote]:
     """Retrieve quote (replied message) from a MMS message."""
     quote = None
     if quote_id:
@@ -569,34 +610,41 @@ def get_mms_quote(
     return quote
 
 
-def get_mentions(db, addressbook, thread_id, versioninfo):
+def get_mentions(
+    db: sqlite3.Cursor,
+    addressbook: Addressbook,
+    thread_id: int,
+    versioninfo: VersionInfo,
+) -> Dict[int, Dict[int, Mention]]:
     """Retrieve all mentions in the DB for the requested thread into a dictionary."""
-    mentions = {}
+    mentions: Dict[int, Dict[int, Mention]] = {}
 
-    if versioninfo.are_mentions_supported():
-        query = db.execute(
-            "SELECT _id, message_id, recipient_id, range_start, range_length "
-            "FROM mention WHERE thread_id=?",
-            (thread_id,),
+    if not versioninfo.are_mentions_supported():
+        return mentions
+
+    query = db.execute(
+        "SELECT _id, message_id, recipient_id, range_start, range_length "
+        "FROM mention WHERE thread_id=?",
+        (thread_id,),
+    )
+    mentions_data = query.fetchall()
+
+    for (
+        _id,
+        message_id,
+        recipient_id,
+        range_start,
+        range_length,
+    ) in mentions_data:
+        name = addressbook.get_recipient_by_address(str(recipient_id)).name
+        mention = Mention(
+            mention_id=_id,
+            name=name,
+            length=range_length,
         )
-        mentions_data = query.fetchall()
-
-        for (
-            _id,
-            message_id,
-            recipient_id,
-            range_start,
-            range_length,
-        ) in mentions_data:
-            name = addressbook.get_recipient_by_address(str(recipient_id)).name
-            mention = Mention(
-                mention_id=_id,
-                name=name,
-                length=range_length,
-            )
-            if not message_id in mentions.keys():
-                mentions[message_id] = {}
-            mentions[message_id][range_start] = mention
+        if not message_id in mentions.keys():
+            mentions[message_id] = {}
+        mentions[message_id][range_start] = mention
 
     return mentions
 
@@ -652,7 +700,12 @@ def get_members(
 
 
 def populate_thread(
-    db, thread, addressbook, backup_dir, thread_dir, versioninfo=None
+    db: sqlite3.Cursor,
+    thread: Thread,
+    addressbook: Addressbook,
+    backup_dir: Path,
+    thread_dir: Path,
+    versioninfo: VersionInfo,
 ):
     """Populate a thread with all corresponding messages"""
     sms_records = get_sms_records(db, thread, addressbook)
@@ -704,7 +757,7 @@ def process_backup(backup_dir: Path, output_dir: Path):
         t = Thread(_id=_id, recipient=recipient)
         thread_dir = t.get_thread_dir(output_dir, make_dir=False)
         populate_thread(
-            db, t, addressbook, backup_dir, thread_dir, versioninfo=versioninfo
+            db, t, addressbook, backup_dir, thread_dir, versioninfo
         )
         dump_thread(t, output_dir)
 

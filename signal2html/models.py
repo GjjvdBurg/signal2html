@@ -10,17 +10,18 @@ License: See LICENSE file.
 
 """
 
-import os
-
 from abc import ABCMeta
 from dataclasses import dataclass
 from dataclasses import field
 from datetime import datetime
+from pathlib import Path
 from re import sub
 from unicodedata import normalize
 
+from typing import Any
 from typing import Dict
 from typing import List
+from typing import Optional
 
 
 @dataclass
@@ -32,7 +33,7 @@ class Recipient:
     phone: str
     uuid: str
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash(self.rid)
 
 
@@ -70,7 +71,7 @@ class GroupCallData:
 
 @dataclass
 class MemberInfo:
-    name: str
+    name: Optional[str]
     phone: str
     match_from_phone: bool
     admin: bool
@@ -99,7 +100,7 @@ class DisplayRecord(metaclass=ABCMeta):
 @dataclass
 class MessageRecord(DisplayRecord):
     _id: int
-    data: any
+    data: Any
     delivery_receipt_count: int
     read_receipt_count: int
 
@@ -114,7 +115,7 @@ class Reaction:
 
 @dataclass
 class MMSMessageRecord(MessageRecord):
-    quote: Quote
+    quote: Optional[Quote]
     attachments: List[Attachment]
     reactions: List[Reaction]
     viewed_receipt_count: int
@@ -139,7 +140,7 @@ class Thread:
         return self.recipient.isgroup
 
     @property
-    def sanephone(self):
+    def sanephone(self) -> str:
         """Return a sanitized phone number suitable for use as filename, and fallback on rid.
 
         NOTE: Phone numbers can be alphanumerical characters especially coming over SMS
@@ -150,19 +151,19 @@ class Thread:
         return "#" + str(self.recipient.rid)
 
     @property
-    def name(self):
+    def name(self) -> str:
         """Return the raw name or other useful identifier, suitable for display."""
         return self.recipient.name.strip()
 
     @property
-    def sanename(self):
+    def sanename(self) -> str:
         """Return a sanitized name or other useful identifier, suitable for use
         as filename, and fallback on rid."""
         if self.recipient.name:
             return self._sanitize(self.recipient.name)
         return "#" + str(self.recipient.rid)
 
-    def _sanitize(self, text):
+    def _sanitize(self, text: str) -> str:
         """Sanitize text to use as filename"""
         clean = normalize("NFKC", text.strip())
         clean = clean.lstrip(".#")
@@ -170,25 +171,25 @@ class Thread:
         clean = clean.rstrip("_")
         return clean
 
-    def get_thread_dir(self, output_dir: str, make_dir=True) -> str:
-        return os.path.dirname(self.get_path(output_dir, make_dir=make_dir))
+    def get_thread_dir(self, output_dir: Path, make_dir: bool = True) -> Path:
+        return self.get_path(output_dir, make_dir=make_dir).parent
 
-    def get_path(self, output_dir: str, make_dir=True) -> str:
+    def get_path(self, output_dir: Path, make_dir: bool = True) -> Path:
         """Return a path for a thread and try to be clever about merging
         contacts. Optionally create the contact directory."""
         dirname = self.sanename
         # Use phone number to distinguish threads from the same contact,
         # except for groups, which do not have a phone number.
         filename = f"{self.sanename if self.is_group else self.sanephone}.html"
-        path = os.path.join(output_dir, dirname, filename)
+        path = output_dir / dirname / filename
         i = 2
-        while os.path.exists(path):
+        while path.exists():
             if self.is_group:
                 dirname = f"{self.sanename}_{i}"
             else:
                 filename = f"{self.sanephone}_{i}.html"
-            path = os.path.join(output_dir, dirname, filename)
+            path = output_dir / dirname / filename
             i += 1
         if make_dir:
-            os.makedirs(os.path.dirname(path), exist_ok=True)
+            path.parent.mkdir(exist_ok=True)
         return path

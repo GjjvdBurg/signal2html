@@ -17,8 +17,8 @@ import logging
 logger = logging.getLogger(__name__)
 
 
-class VersionInfo(object):
-    def __init__(self, version):
+class VersionInfo:
+    def __init__(self, version: str):
         self.version = int(version)
         logger.info(f"Found Signal database version: {version}.")
 

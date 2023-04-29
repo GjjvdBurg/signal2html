@@ -24,12 +24,12 @@ REQUIRED = [
     'dataclasses;python_version=="3.6"',
     "pure-protobuf",
     "linkify-it-py",
-    "filetype"
+    "filetype",
 ]
 
 docs_require = []
-test_require = []
-dev_require = ["green", "black", "isort"]
+test_require = ["green", "mypy"]
+dev_require = ["black", "isort"]
 
 # What packages are optional?
 EXTRAS = {

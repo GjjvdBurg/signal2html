@@ -9,7 +9,12 @@ License: See LICENSE file.
 import datetime as dt
 import logging
 
+from pathlib import Path
 from types import SimpleNamespace as ns
+
+from typing import Any
+from typing import Dict
+from typing import Optional
 
 from emoji import emoji_list
 from jinja2 import Environment
@@ -19,6 +24,7 @@ from jinja2 import select_autoescape
 from .html_colors import get_color
 from .html_colors import list_colors
 from .linkify import linkify
+from .models import Mention
 from .models import MMSMessageRecord
 from .models import Thread
 from .types import DisplayType
@@ -36,13 +42,15 @@ from .types import is_secure
 logger = logging.getLogger(__name__)
 
 
-def is_all_emoji(body):
+def is_all_emoji(body: str) -> bool:
     """Check if a message is non-empty and only contains emoji"""
     body = body.replace(" ", "").replace("\ufe0f", "")
     return len(emoji_list(body)) == len(body) and len(body) > 0
 
 
-def format_message(body, mentions=None):
+def format_message(
+    body: Optional[str], mentions: Optional[Dict[int, Mention]] = None
+) -> Optional[str]:
     """Format message by processing all characters.
 
     - Wrap emoji in <span> for styling them
@@ -91,7 +99,7 @@ def format_message(body, mentions=None):
 
 
 def format_member_list(header: str, member_list):
-    """Return a list of printable group members belonging to a category (e.g. new members)."""
+    """Return a list of printable group members belonging to a category"""
     people = ns()
     people.header = header
     people.members = list()
@@ -99,14 +107,20 @@ def format_member_list(header: str, member_list):
         designation = ""
         if not member.match_from_phone:
             if member.phone:
-                designation = f"{format_message(member.name)} ({format_message(member.phone)})"
+                designation = (
+                    f"{format_message(member.name)} "
+                    f"({format_message(member.phone)})"
+                )
             else:
                 designation = f"{format_message(member.name)}"
         else:
             if member.name is None or member.name == member.phone:
                 designation = f"{format_message(member.phone)}"
             else:
-                designation = f"{format_message(member.phone)} ~ {format_message(member.name)}"
+                designation = (
+                    f"{format_message(member.phone)} ~ "
+                    f"{format_message(member.name)}"
+                )
 
         if member.admin:
             designation += " (admin)"
@@ -123,7 +137,9 @@ def format_event_data_group_update(data):
 
     event_data.header = "Group update"
     if data.change_by:
-        event_data.header += " by " + format_message(data.change_by.name)
+        formatted_name = format_message(data.change_by.name)
+        if formatted_name is not None:
+            event_data.header += f" by {formatted_name}"
 
     if data.group_name:
         event_data.name = data.group_name
@@ -145,7 +161,7 @@ def format_event_data_group_update(data):
     return event_data
 
 
-def dump_thread(thread: Thread, output_dir: str):
+def dump_thread(thread: Thread, output_dir: Path):
     """Write a Thread instance to a HTML page in the output directory"""
 
     # Combine and sort the messages
@@ -202,6 +218,7 @@ def dump_thread(thread: Thread, output_dir: str):
     # Create a simplified dict for each message
     prev_date = None
     simple_messages = []
+    out: Dict[str, Any] = {}
     for msg in messages:
         if is_joined_type(msg._type):
             continue
@@ -244,8 +261,8 @@ def dump_thread(thread: Thread, output_dir: str):
             )  # "Group update (v2)"
 
         # Deal with quoted messages
-        quote = {}
-        if isinstance(msg, MMSMessageRecord) and msg.quote:
+        quote: Dict[str, Any] = {}
+        if isinstance(msg, MMSMessageRecord) and msg.quote is not None:
             quote_author_id = msg.quote.author.rid
             quote_author_name = msg.quote.author.name
             if quote_author_id == quote_author_name:
@@ -306,11 +323,19 @@ def dump_thread(thread: Thread, output_dir: str):
         if isinstance(msg, MMSMessageRecord):
             for a in msg.attachments:
                 if a.quote:
+                    # TODO: ugly, rework this
+                    assert isinstance(out["quote"], dict)
+                    assert "attachments" in out["quote"]
+                    assert isinstance(out["quote"]["attachments"], list)
                     out["quote"]["attachments"].append(a)
                 else:
+                    # TODO: ugly, rework this
+                    assert isinstance(out["attachments"], list)
                     out["attachments"].append(a)
 
             for r in msg.reactions:
+                # TODO: ugly, rework this
+                assert isinstance(out["reactions"], list)
                 out["reactions"].append(
                     {
                         "recipient_id": r.recipient.rid,
